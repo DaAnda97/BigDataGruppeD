@@ -19,8 +19,8 @@ public class MainTest {
         int[] numbers = new int[] {4,5,2,3,1};
 
         // when
-        Main main = new Main(numbers);
-        int[] sortedNumbers = main.sort();
+        MergeSort main = new MergeSort(numbers);
+        int[] sortedNumbers = main.mergeSort();
 
         // then
         assertArrayEquals(new int[] {1,2,3,4,5}, sortedNumbers);
@@ -33,8 +33,8 @@ public class MainTest {
         int[] numbers = FileHandler.readIntArrayFromFile("RandomIntegers.csv");
 
         //when
-        Main main = new Main(numbers);
-        int[] sortedNumbers = main.sort();
+        MergeSort main = new MergeSort(numbers);
+        int[] sortedNumbers = main.mergeSort();
 
         // then
         List<Integer> list = Arrays.stream(sortedNumbers).boxed().collect(Collectors.toList());
