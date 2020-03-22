@@ -13,7 +13,7 @@ public class FileHandlerTest {
         String fileName = "RandomIntegers.csv";
 
         //given
-        int[] randomIntArray = NumberGenerator.randomIntegers(2000000);
+        int[] randomIntArray = NumberGenerator.randomIntegers(5000000);
 
         //when
         FileHandler.saveIntArrayToFile(fileName, randomIntArray);
