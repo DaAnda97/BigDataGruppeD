@@ -10,10 +10,10 @@ public class FileHandlerTest {
     @Test
     public void givenRandomArray_whenSaveAndRead_thenSameArray() throws IOException {
 
-        String fileName = "RandomIntegers.csv";
+        String fileName = "RandomIntegersBigger.csv";
 
         //given
-        int[] randomIntArray = NumberGenerator.randomIntegers(5000000);
+        int[] randomIntArray = NumberGenerator.randomIntegers(50000000);
 
         //when
         FileHandler.saveIntArrayToFile(fileName, randomIntArray);

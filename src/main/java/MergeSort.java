@@ -1,8 +1,9 @@
 import java.util.Arrays;
+import java.util.concurrent.*;
 
 public class MergeSort {
 
-    public static int[] sort(int[] array) {
+    public static int[] mergeSort(int[] array) {
         int length = array.length;
 
         // return if only one element left
@@ -15,12 +16,64 @@ public class MergeSort {
         int[] rightHalf = Arrays.copyOfRange(array, mid_index, length);
 
         // recursive call
-        int[] sortedLeftHalf = sort(leftHalf);
-        int[] sortedRightHalf = sort(rightHalf);
+        int[] sortedLeftHalf = mergeSort(leftHalf);
+        int[] sortedRightHalf = mergeSort(rightHalf);
 
         return merge(sortedLeftHalf, sortedRightHalf);
     }
 
+    /**
+     * Use multi threading for merge sort
+     * @param array the array which needs to be sorted
+     * @param availableThreads the available threads of the cpu
+     * @return
+     */
+    public static int[] parallelMergeSort(int[] array, int availableThreads) {
+
+        int length = array.length;
+
+        // return if only one element left
+        if (length == 1)
+            return array;
+
+        // divide
+        int mid_index = length / 2;
+        int[] leftHalf = Arrays.copyOfRange(array, 0, mid_index);
+        int[] rightHalf = Arrays.copyOfRange(array, mid_index, length);
+
+        // fall back to single threaded merge sort if all threads are currently in use
+        if(availableThreads <= 1) {
+            return mergeSort(array);
+        }
+
+        //
+        ExecutorService leftHalfArray = Executors.newSingleThreadExecutor();
+        Callable<int[]> leftHalfArrayCallable = () -> parallelMergeSort(leftHalf, availableThreads - 1);
+
+        ExecutorService rightHalfArray = Executors.newSingleThreadExecutor();
+        Callable<int[]> rightHalfArrayCallable = () -> parallelMergeSort(rightHalf, availableThreads - 1);
+
+        Future<int[]> leftHalfFuture = leftHalfArray.submit(leftHalfArrayCallable);
+        Future<int[]> rightHalfFuture = rightHalfArray.submit(rightHalfArrayCallable);
+
+        int[] sortedLeftHalf = null;
+        int[] sortedRightHalf = null;
+        try {
+            sortedLeftHalf = leftHalfFuture.get();
+            sortedRightHalf = rightHalfFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        leftHalfArray.shutdown();
+        rightHalfArray.shutdown();
+
+        assert sortedLeftHalf != null;
+        assert sortedRightHalf != null;
+
+        //
+        return merge(sortedLeftHalf, sortedRightHalf);
+    }
 
     private static int[] merge(int[] leftHalf, int[] rightHalf) {
 
