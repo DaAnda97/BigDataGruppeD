@@ -31,7 +31,7 @@ public class MergeSortTest {
     public void givenSingleColumnCSV_whenMainSort_thenSorted() throws IOException {
 
         // given
-        int[] numbers = FileHandler.readIntArrayFromFile("RandomIntegers.csv");
+        int[] numbers = FileHandler.readIntArrayFromFile("RandomIntegersBigger.csv");
 
         //when
         int[] sortedNumbers = MergeSort.mergeSort(numbers);
@@ -44,14 +44,14 @@ public class MergeSortTest {
     @Test
     public void multiThreadedSorting() throws IOException {
 
-        int availableThreads = 4;
+        int recursionLevel = 4;
 
         // given
         int[] numbers = FileHandler.readIntArrayFromFile("RandomIntegersBigger.csv");
 
         // when
         Instant startMultiThreaded = Instant.now();
-        int[] sortedNumbersMultiThreaded = MergeSort.parallelMergeSort(numbers, 4);
+        int[] sortedNumbersMultiThreaded = MergeSort.parallelMergeSort(numbers, recursionLevel);
         Instant endMultiThreaded = Instant.now();
 
         // then
@@ -62,7 +62,7 @@ public class MergeSortTest {
     @Test
     public void multiThreadedSortingShouldBeFasterThanSingleThreaded() throws IOException {
 
-        int availableThreads = 4;
+        int recursionLevel = 4;
 
         // given
         int[] numbers = FileHandler.readIntArrayFromFile("RandomIntegersBigger.csv");
@@ -74,7 +74,7 @@ public class MergeSortTest {
 
         // when multi threaded
         Instant startMultiThreaded = Instant.now();
-        int[] sortedNumbersMultiThreaded = MergeSort.parallelMergeSort(numbers, 4);
+        int[] sortedNumbersMultiThreaded = MergeSort.parallelMergeSort(numbers, recursionLevel);
         Instant endMultiThreaded = Instant.now();
 
         // then assert that multi threaded is faster

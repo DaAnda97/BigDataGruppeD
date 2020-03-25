@@ -25,10 +25,10 @@ public class MergeSort {
     /**
      * Use multi threading for merge sort
      * @param array the array which needs to be sorted
-     * @param availableThreads the available threads of the cpu
+     * @param maxRecursionLevel the maximum number of recursion levels this call may use
      * @return
      */
-    public static int[] parallelMergeSort(int[] array, int availableThreads) {
+    public static int[] parallelMergeSort(int[] array, int maxRecursionLevel) {
 
         int length = array.length;
 
@@ -42,16 +42,16 @@ public class MergeSort {
         int[] rightHalf = Arrays.copyOfRange(array, mid_index, length);
 
         // fall back to single threaded merge sort if all threads are currently in use
-        if(availableThreads <= 1) {
+        if(maxRecursionLevel <= 1) {
             return mergeSort(array);
         }
 
         //
         ExecutorService leftHalfArray = Executors.newSingleThreadExecutor();
-        Callable<int[]> leftHalfArrayCallable = () -> parallelMergeSort(leftHalf, availableThreads - 1);
+        Callable<int[]> leftHalfArrayCallable = () -> parallelMergeSort(leftHalf, maxRecursionLevel - 1);
 
         ExecutorService rightHalfArray = Executors.newSingleThreadExecutor();
-        Callable<int[]> rightHalfArrayCallable = () -> parallelMergeSort(rightHalf, availableThreads - 1);
+        Callable<int[]> rightHalfArrayCallable = () -> parallelMergeSort(rightHalf, maxRecursionLevel - 1);
 
         Future<int[]> leftHalfFuture = leftHalfArray.submit(leftHalfArrayCallable);
         Future<int[]> rightHalfFuture = rightHalfArray.submit(rightHalfArrayCallable);
