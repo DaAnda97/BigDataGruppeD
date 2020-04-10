@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - --configFile=/traefik.yml
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./acme.json:/acme.json"
+      - "./traefik.yml:/traefik.yml"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    labels:
+      # Dashboard
+      - traefik.http.routers.traefikRouter.rule=Host("traefik.${DOMAIN}")
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+      - traefik.http.routers.traefikRouter.service=api@internal
+      - traefik.http.routers.traefikRouter.middlewares=traefikAuth
+      - traefik.http.routers.traefikRouter.tls=true
+      - traefik.http.routers.traefikRouter.tls.certresolver=mytlschallenge
+      - traefik.http.middlewares.traefikAuth.basicauth.users=${TRAEFIK_CREDS}
+      # Config
+      - traefik.http.middlewares.sslredirect.redirectscheme.scheme=https
+      - traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=http
+      - traefik.http.routers.http-catchall.middlewares=sslredirect      
+    restart: always
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

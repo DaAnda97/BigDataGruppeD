@@ -1,0 +1,64 @@
+version: '3.7'
+
+services:
+
+  namenode:
+    image: bde2020/hadoop-namenode:latest
+    container_name: hadoopNamenode
+    volumes:
+      - /opt/data/hadoop/namenode:/hadoop/dfs/name
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - CLUSTER_NAME=bigdata
+    env_file:
+      - ./hadoop.env
+    labels:
+      - traefik.http.routers.hadoopNamenodeRouter.rule=Host("namenode.hadoop.${DOMAIN}")
+      - traefik.http.routers.hadoopNamenodeRouter.middlewares=hadoopAuth
+      - traefik.http.middlewares.hadoopAuth.basicauth.users=${HADOOP_CREDS}
+      - traefik.http.routers.hadoopNamenodeRouter.tls=true
+      - traefik.http.routers.hadoopNamenodeRouter.tls.certresolver=mytlschallenge
+      - traefik.http.routers.hadoopNamenodeRouter.entrypoints=https
+      - traefik.http.services.hadoopNamenode.loadbalancer.server.port=9870
+    expose: 
+      - 9870
+    networks:
+      - proxy
+
+  datanode1:
+    image: bde2020/hadoop-datanode:latest
+    container_name: hadoopDatanode1
+    depends_on:
+     - namenode
+    volumes:
+      - /opt/data/hadoop/datanode:/hadoop/dfs/name
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    networks:
+      - proxy
+
+  datanode2:
+    image: bde2020/hadoop-datanode:latest
+    container_name: hadoopDatanode2
+    depends_on:
+     - namenode
+    volumes:
+      - /opt/data/hadoop/datanode:/hadoop/dfs/name
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    networks:
+      - proxy
+
+
+networks:
+  proxy:
+    external: true
