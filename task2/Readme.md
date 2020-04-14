@@ -10,7 +10,7 @@ Hadoop is an open-source framework for working with huge data
 
 1. Create network
    ``` bash
-   docker network create proxy
+   docker network create hadoop_network
    ```
 
 1. Run the service
