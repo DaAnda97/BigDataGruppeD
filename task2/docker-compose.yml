@@ -1,64 +1,86 @@
-version: '3.7'
+version: "3.7"
 
 services:
-
-  namenode:
-    image: bde2020/hadoop-namenode:latest
-    container_name: hadoopNamenode
+  
+  master:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: master
+    restart: always
+    ports:
+      - 9870:9870
+      - 9000:9000
     volumes:
-      - /opt/data/hadoop/namenode:/hadoop/dfs/name
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - ./data/master:/hadoop/dfs/name
     environment:
       - CLUSTER_NAME=bigdata
     env_file:
       - ./hadoop.env
-    labels:
-      - traefik.http.routers.hadoopNamenodeRouter.rule=Host("namenode.hadoop.${DOMAIN}")
-      - traefik.http.routers.hadoopNamenodeRouter.middlewares=hadoopAuth
-      - traefik.http.middlewares.hadoopAuth.basicauth.users=${HADOOP_CREDS}
-      - traefik.http.routers.hadoopNamenodeRouter.tls=true
-      - traefik.http.routers.hadoopNamenodeRouter.tls.certresolver=mytlschallenge
-      - traefik.http.routers.hadoopNamenodeRouter.entrypoints=https
-      - traefik.http.services.hadoopNamenode.loadbalancer.server.port=9870
-    expose: 
-      - 9870
-    networks:
-      - proxy
+    networks: 
+      - hadoop_network
 
-  datanode1:
-    image: bde2020/hadoop-datanode:latest
-    container_name: hadoopDatanode1
-    depends_on:
-     - namenode
+  worker1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: worker1
+    restart: always
     volumes:
-      - /opt/data/hadoop/datanode:/hadoop/dfs/name
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - ./data/worker1:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "master:9870"
     env_file:
       - ./hadoop.env
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
     networks:
-      - proxy
-
-  datanode2:
-    image: bde2020/hadoop-datanode:latest
-    container_name: hadoopDatanode2
-    depends_on:
-     - namenode
+      - hadoop_network
+  
+  worker2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: worker2
+    restart: always
     volumes:
-      - /opt/data/hadoop/datanode:/hadoop/dfs/name
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - ./data/worker2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "master:9870"
     env_file:
       - ./hadoop.env
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
     networks:
-      - proxy
+      - hadoop_network
+  
+  yarn:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: yarn
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 yarn:8088"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+  
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 yarn:8088"
+    volumes:
+      - ./data/hadoop_historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
 
 
 networks:
-  proxy:
+  hadoop_network:
     external: true
+  
