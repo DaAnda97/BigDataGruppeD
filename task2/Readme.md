@@ -18,3 +18,8 @@ Hadoop is an open-source framework for working with huge data
    docker-compose up -d
    ```
 
+1. Load file into hdfs
+   ```
+   docker cp sharlock.txt master:/hadoop-data/sharlock.txt
+   docker exec -it master hadoop fs -put sharlock.txt /bda_course/exercise01/
+   ```
