@@ -56,6 +56,41 @@ services:
       - ./hadoop.env
     networks:
       - hadoop_network
+      
+  yarn:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: yarn
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 worker3:9864"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 worker3:9864 yarn:8088"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+  
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 worker3:9864 yarn:8088"
+    volumes:
+      - ./data/hadoop_historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
 
 networks:
   hadoop_network:
