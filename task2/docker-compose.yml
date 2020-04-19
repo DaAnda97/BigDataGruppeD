@@ -57,12 +57,14 @@ services:
     networks:
       - hadoop_network
       
-  yarn:
+  resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
-    container_name: yarn
+    container_name: resourcemanager
+    ports:
+      - 8088:8088
     restart: always
     environment:
-      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 worker3:9864"
+      SERVICE_PRECONDITION: "master:9000 master:9870 node01:9864 node02:9864 node03:9864"
     env_file:
       - ./hadoop.env
     networks:
@@ -73,7 +75,7 @@ services:
     container_name: nodemanager
     restart: always
     environment:
-      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 worker3:9864 yarn:8088"
+      SERVICE_PRECONDITION: "master:9000 master:9870 node01:9864 node02:9864 node03:9864 resourcemanager:8088"
     env_file:
       - ./hadoop.env
     networks:
@@ -82,11 +84,13 @@ services:
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
+    ports:
+      - 8188:8188
     restart: always
     environment:
-      SERVICE_PRECONDITION: "master:9000 master:9870 worker1:9864 worker2:9864 worker3:9864 yarn:8088"
+      SERVICE_PRECONDITION: "master:9000 master:9870 node01:9864 node02:9864 node03:9864 resourcemanager:8088"
     volumes:
-      - ./data/hadoop_historyserver:/hadoop/yarn/timeline
+      - ./data/hadoop_historyserver:/hadoop/resourcemanager/timeline
     env_file:
       - ./hadoop.env
     networks:
