@@ -29,6 +29,5 @@ Hadoop is an open-source framework for working with huge data
    docker exec -it master hadoop fs -put /hadoop-data/lorem_ipsum.txt /bda_course/exercise01/
 
    # run mapreduce
-   docker exec -it master export HADOOP_CLASSPATH=$(cygpath -pw $(hadoop classpath)):$HADOOP_CLASSPATH
    docker exec -it master hadoop jar /hadoop-data/wordcount.jar /bda_course/exercise01/lorem_ipsum.txt /bda_course/exercise01/output
    ```
