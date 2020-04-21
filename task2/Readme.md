@@ -22,7 +22,7 @@ Hadoop is an open-source framework for working with huge data
    ``` bash
    docker exec -it master hadoop namenode -format
    docker cp lorem_ipsum.txt master:/hadoop-data/lorem_ipsum.txt
-   docker cp ./WordCount/target/wordcount-1.0-SNAPSHOT-jar-with-dependencies.jar master:/hadoop-data/wordcount.jar
+   docker cp ./wc.jar master:/hadoop-data/wordcount.jar
 
    # add file in filesystem
    docker exec -it master hadoop fs -mkdir -p /bda_course/exercise01
