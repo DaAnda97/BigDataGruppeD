@@ -3,6 +3,12 @@ Hadoop is an open-source framework for working with huge data
 
 ## Installation
 
+1. Install make with chocolatey (Powershell as admin):
+   ```
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+   choco install make
+   ```
+
 1. Create data folder
    ```
    mkdir data
@@ -15,19 +21,15 @@ Hadoop is an open-source framework for working with huge data
 
 1. Run the service
    ``` bash
-   docker-compose up -d
+   make up 
    ```
 
 1. Load file into hdfs
    ``` bash
-   docker exec -it master hadoop namenode -format
-   docker cp lorem_ipsum.txt master:/hadoop-data/lorem_ipsum.txt
-   docker cp ./wc.jar master:/hadoop-data/wordcount.jar
+   make file
+   ```
 
-   # add file in filesystem
-   docker exec -it master hadoop fs -mkdir -p /bda_course/exercise01
-   docker exec -it master hadoop fs -put /hadoop-data/lorem_ipsum.txt /bda_course/exercise01/
-
-   # run mapreduce
-   docker exec -it master hadoop jar /hadoop-data/wordcount.jar /bda_course/exercise01/lorem_ipsum.txt /bda_course/exercise01/output
+1. Run Map-Reduce-Job counting words:
+   ```
+   make mr-count-loremipsum
    ```
