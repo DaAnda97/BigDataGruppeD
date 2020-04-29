@@ -1,0 +1,102 @@
+version: "3.7"
+
+services:
+  
+  master:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: master
+    restart: always
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - ./data/master:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=bigdata
+    env_file:
+      - ./hadoop.env
+    networks: 
+      - hadoop_network
+
+  node01:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: node01
+    restart: always
+    volumes:
+      - ./data/node01:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "master:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+  
+  node02:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: node02
+    restart: always
+    volumes:
+      - ./data/node02:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "master:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+
+  node03:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: node03
+    restart: always
+    volumes:
+      - ./data/node03:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "master:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+      
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    ports:
+      - 8088:8088
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 node01:9864 node02:9864 node03:9864"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 node01:9864 node02:9864 node03:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+  
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    ports:
+      - 8188:8188
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "master:9000 master:9870 node01:9864 node02:9864 node03:9864 resourcemanager:8088"
+    volumes:
+      - ./data/hadoop_historyserver:/hadoop/resourcemanager/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop_network
+
+networks:
+  hadoop_network:
+    external: true
+  
