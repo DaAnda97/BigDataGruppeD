@@ -9,7 +9,7 @@ Hadoop is an open-source framework for working with huge data
    choco install make
    ```
 
-1. Extract log-file `NASA_access_log_Jul95.gz` and rename it by adding `NASA_access_log_Jul95.txt`.
+1. Extract log-file `NASA_access_log_Jul95.gz` and rename it to `NASA_access_log_Jul95.txt`.
 
 1. Build the executable jar (execute in MapReduce folder)
    ```
