@@ -3,7 +3,7 @@ up:
 	
 add:
 	docker exec -it master hadoop namenode -format
-	docker cp lorem_ipsum.txt master:/hadoop-data/lorem_ipsum.txt
+	docker cp NASA_access_log_Jul95.txt master:/hadoop-data/NASA_access_log_Jul95.txt
 	docker exec -it master hadoop fs -mkdir -p /bda_course/exercise01
 	docker exec -it master hadoop fs -put /hadoop-data/NASA_access_log_Jul95.txt /bda_course/exercise01/
 	docker cp ./MapReduce/target/mapreduce-1.0-SNAPSHOT-jar-with-dependencies.jar master:/hadoop-data/mapreduce.jar
