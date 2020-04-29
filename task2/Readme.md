@@ -31,5 +31,5 @@ Hadoop is an open-source framework for working with huge data
 
 1. Run Map-Reduce-Job counting words:
    ```
-   make mr-count-loremipsum
+   make mr
    ```
