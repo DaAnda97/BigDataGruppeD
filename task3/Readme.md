@@ -9,6 +9,8 @@ Hadoop is an open-source framework for working with huge data
    choco install make
    ```
 
+1. Extract log-file `NASA_access_log_Jul95.gz` and rename it by adding `.txt`.
+
 1. Create data folder
    ```
    mkdir data
@@ -24,12 +26,17 @@ Hadoop is an open-source framework for working with huge data
    make up 
    ```
 
-1. Load file into hdfs
+1. Load file and program into hdfs
    ``` bash
-   make file
+   make add
    ```
 
-1. Run Map-Reduce-Job counting words:
+1. Run Map-Reduce-Job:
    ```
-   make mr-count-loremipsum
+   make mr job=<JOB_NAME>
+   ```
+
+1. View results:
+   ```
+   docker exec -it master hadoop fs -cat /bda_course/exercise01/output/<JOB_NAME>/part-<FILENAME>
    ```
