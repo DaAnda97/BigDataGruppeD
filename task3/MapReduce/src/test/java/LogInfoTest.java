@@ -1,4 +1,4 @@
-import com.bda.wordcount.LogInfo;
+import com.bda.mapreduce.LogInfo;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

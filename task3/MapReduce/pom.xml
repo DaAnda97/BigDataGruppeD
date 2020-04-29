@@ -53,7 +53,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.bda.wordcount.HoursCount</mainClass>
+                            <mainClass>com.bda.mapreduce.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -64,7 +64,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.bda.wordcount.HoursCount</mainClass>
+                            <mainClass>com.bda.mapreduce.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

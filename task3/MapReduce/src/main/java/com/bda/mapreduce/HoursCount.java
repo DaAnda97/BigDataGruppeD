@@ -1,8 +1,7 @@
-package com.bda.wordcount;
+package com.bda.mapreduce;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Scanner;
+import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -22,23 +21,21 @@ public class HoursCount {
         private Text keyHour = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            Scanner scanner = new Scanner(new File("/bda_course/exercise01/access_log_Jul95.txt"));
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
 
-                LogInfo logInfo = new LogInfo(line);
+            StringTokenizer itr = new StringTokenizer(value.toString(), "\n");
+            while (itr.hasMoreTokens()) {
+
+                LogInfo logInfo = new LogInfo(itr.nextToken());
                 String hour = logInfo.getTimeHour();
                 keyHour.set(new Text(hour));
 
+                keyHour.set(itr.nextToken());
                 context.write(keyHour, one);
             }
-            scanner.close();
         }
-
     }
 
-    public static class IntSumReducer
-            extends Reducer<Text,IntWritable,Text,IntWritable> {
+    public static class IntSumReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
 
         public void reduce(Text key, Iterable<IntWritable> values,
@@ -53,7 +50,9 @@ public class HoursCount {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+
+
+    public static void run(String inputFile, String outputPath) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "hours count");
         job.setJarByClass(HoursCount.class);
@@ -62,8 +61,8 @@ public class HoursCount {
         job.setReducerClass(IntSumReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        FileInputFormat.addInputPath(job, new Path(inputFile));
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
