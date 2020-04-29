@@ -1,5 +1,14 @@
 package com.bda.wordcount;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Locale;
+
 public class LogInfo {
 
     private String host;
@@ -7,27 +16,35 @@ public class LogInfo {
     private String logLevel;
     private String httpVerb;
     private String resourcePath;
+    private String protocol;
     private String returnCode;
     private String responseLength;
 
     public LogInfo() {}
 
-    public LogInfo(
-            String host,
-            String time,
-            String logLevel,
-            String httpVerb,
-            String resourcePath,
-            String returnCode,
-            String responseLength)
+    public LogInfo(String line)
     {
-        this.host = host;
-        this.time = time;
-        this.logLevel = logLevel;
-        this.httpVerb = httpVerb;
-        this.resourcePath = resourcePath;
-        this.returnCode = returnCode;
-        this.responseLength = responseLength;
+        String[] splittedLine = line.replace("- ", "")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("\"", "")
+                .split(" ");
+
+        this.host = splittedLine[0];
+        this.time = splittedLine[1];
+        this.logLevel = splittedLine[2];
+        this.httpVerb = splittedLine[3];
+        this.resourcePath = splittedLine[4];
+        this.protocol = splittedLine[5];
+        this.returnCode = splittedLine[6];
+        this.responseLength = splittedLine[7];
+    }
+
+    public String getTimeHour(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
+        LocalDateTime dateTime = LocalDateTime.parse(this.time, formatter);
+
+        return dateTime.getHour() + "";
     }
 
     public String getHost() {
@@ -70,9 +87,11 @@ public class LogInfo {
         this.resourcePath = resourcePath;
     }
 
-    public String getReturnCode() {
-        return returnCode;
-    }
+    public String getProtocol() { return protocol; }
+
+    public void setProtocol(String protocol) { this.protocol = protocol; }
+
+    public String getReturnCode() { return returnCode; }
 
     public void setReturnCode(String returnCode) {
         this.returnCode = returnCode;
