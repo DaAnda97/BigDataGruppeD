@@ -1,5 +1,7 @@
 package com.bda.mapreduce;
 
+import org.apache.log4j.Logger;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -15,24 +17,33 @@ public class LogInfo {
     private String returnCode;
     private String responseLength;
 
+    private static Logger logger = Logger.getLogger(LogInfo.class);
+
     public LogInfo() {}
 
     public LogInfo(String line)
     {
-        String[] splittedLine = line.replace("- ", "")
-                .replace("[", "")
-                .replace("]", "")
-                .replace("\"", "")
-                .split(" ");
 
-        this.host = splittedLine[0];
-        this.time = splittedLine[1];
-        this.logLevel = splittedLine[2];
-        this.httpVerb = splittedLine[3];
-        this.resourcePath = splittedLine[4];
-        this.protocol = splittedLine[5];
-        this.returnCode = splittedLine[6];
-        this.responseLength = splittedLine[7];
+        try {
+             String[] splittedLine = line.replace("- ", "")
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replace("\"", "")
+                    .split(" ");
+
+            this.host = splittedLine[0];
+            this.time = splittedLine[1];
+            this.logLevel = splittedLine[2];
+            this.httpVerb = splittedLine[3];
+            this.resourcePath = splittedLine[4];
+            this.protocol = splittedLine[5];
+            this.returnCode = splittedLine[6];
+            this.responseLength = splittedLine[7];
+
+        } catch (ArrayIndexOutOfBoundsException e){
+            logger.error("Failed while parsing line [" + line + "] \n");
+            throw e;
+        }
     }
 
     public String getTimeHour(){
