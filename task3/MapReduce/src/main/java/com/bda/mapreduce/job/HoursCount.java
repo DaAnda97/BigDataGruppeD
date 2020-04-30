@@ -1,8 +1,8 @@
-package com.bda.mapreduce;
+package com.bda.mapreduce.job;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
 
+import com.bda.mapreduce.model.LogInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -23,7 +23,8 @@ public class HoursCount {
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
 
-            LogInfo logInfo = new LogInfo(line);
+            LogInfo logInfo = new LogInfo();
+            logInfo.parse(line);
             String hour = logInfo.getTimeHour();
 
             context.write(new Text(hour), one);

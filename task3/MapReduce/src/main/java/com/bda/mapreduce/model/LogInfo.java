@@ -1,6 +1,6 @@
-package com.bda.mapreduce;
+package com.bda.mapreduce.model;
 
-import org.apache.log4j.Logger;
+import com.bda.mapreduce.exception.LogParseException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -17,11 +17,10 @@ public class LogInfo {
     private String returnCode;
     private String responseLength;
 
-    private static Logger logger = Logger.getLogger(LogInfo.class);
 
     public LogInfo() {}
 
-    public LogInfo(String line)
+    public void parse(String line)
     {
 
         try {
@@ -40,9 +39,8 @@ public class LogInfo {
             this.returnCode = splittedLine[6];
             this.responseLength = splittedLine[7];
 
-        } catch (ArrayIndexOutOfBoundsException e){
-            logger.error("Failed while parsing line [" + line + "] \n");
-            throw e;
+        } catch (RuntimeException e){
+            throw new LogParseException(line);
         }
     }
 

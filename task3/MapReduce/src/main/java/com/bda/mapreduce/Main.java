@@ -1,5 +1,7 @@
 package com.bda.mapreduce;
 
+import com.bda.mapreduce.job.HoursCount;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {

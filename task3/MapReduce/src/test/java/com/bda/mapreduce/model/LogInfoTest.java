@@ -1,4 +1,6 @@
-import com.bda.mapreduce.LogInfo;
+package com.bda.mapreduce.model;
+
+import com.bda.mapreduce.exception.LogParseException;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -10,23 +12,37 @@ public class LogInfoTest {
 
     private static final String CORRUPT_LOG = "[01/Jul/1995:00:00:01 -0400] \"GET /history/apollo/ HTTP/1.0\" 200 6245";
 
-
-
+    
     @Test
     public void shouldDetectHours() {
-        LogInfo info = new LogInfo(LOG);
+        LogInfo info = new LogInfo();
+        info.parse(LOG);
 
         assertEquals("0", info.getTimeHour());
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
-    public void shouldLog() {
-        LogInfo info = new LogInfo(CORRUPT_LOG);
+    @Test(expected = LogParseException.class)
+    public void shouldNotBeAbleToParse() {
+
+        try
+        {
+            LogInfo info = new LogInfo();
+            info.parse(CORRUPT_LOG);
+        }
+        catch(LogParseException e)
+        {
+            String message = "Error while parsing Line: " + CORRUPT_LOG;
+            assertEquals(message, e.getMessage());
+            throw e;
+        }
+        fail("LogParseException exception did not throw!");
+
     }
 
     @Test
     public void shouldParseLog2Correctly() {
-        LogInfo info = new LogInfo(LOG_2);
+        LogInfo info = new LogInfo();
+        info.parse(LOG_2);
 
         assertEquals("waters-gw.starway.net.au", info.getHost());
         assertEquals("01/Jul/1995:00:00:25", info.getTime());
@@ -40,7 +56,8 @@ public class LogInfoTest {
 
     @Test
     public void shouldParseLogCorrectly() {
-        LogInfo info = new LogInfo(LOG);
+        LogInfo info = new LogInfo();
+        info.parse(LOG);
 
         assertEquals("199.72.81.55", info.getHost());
         assertEquals("01/Jul/1995:00:00:01", info.getTime());
