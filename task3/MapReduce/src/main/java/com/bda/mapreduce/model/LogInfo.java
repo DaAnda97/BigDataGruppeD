@@ -35,9 +35,16 @@ public class LogInfo {
             this.logLevel = splittedLine[2];
             this.httpVerb = splittedLine[3];
             this.resourcePath = splittedLine[4];
-            this.protocol = splittedLine[5];
-            this.returnCode = splittedLine[6];
-            this.responseLength = splittedLine[7];
+
+            //some logs contain protocol, some dont
+            if(splittedLine.length == 8){
+                this.protocol = splittedLine[5];
+            } else {
+                this.protocol = "";
+            }
+
+            this.returnCode = splittedLine[splittedLine.length - 2]; // pre last element
+            this.responseLength = splittedLine[splittedLine.length - 1]; // last element
 
         } catch (RuntimeException e){
             throw new LogParseException(line);

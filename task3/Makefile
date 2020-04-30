@@ -1,7 +1,7 @@
 up:
 	docker-compose up -d
 	
-add:
+file:
 	docker exec -it master hadoop namenode -format
 	docker cp NASA_access_log_Jul95.txt master:/hadoop-data/NASA_access_log_Jul95.txt
 	docker exec -it master hadoop fs -mkdir -p /bda_course/exercise01
