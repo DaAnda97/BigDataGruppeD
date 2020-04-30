@@ -5,6 +5,8 @@ Hadoop is an open-source framework for working with huge data
 
 1. Extract log-file `NASA_access_log_Jul95.gz` and rename it to `NASA_access_log_Jul95.txt`.
 
+1. Remove it's last row. It's corrupt!
+
 1. Build the executable jar (execute in MapReduce folder)
    ```
    mvn clean compile assembly:single
@@ -28,7 +30,7 @@ Hadoop is an open-source framework for working with huge data
 1.    
    ```
    sudo java -jar ./target/mapreduce-1.0-SNAPSHOT-jar-with-dependencies.jar HoursCount ../NASA_access_log_Jul95.txt ./output/HoursCount
-   
+   sudo java -jar ./target/mapreduce-1.0-SNAPSHOT-jar-with-dependencies.jar ResponseLengthCount ../NASA_access_log_Jul95.txt ./output/ResponseLengthCount
    ```
 
 ### Run with docker-cluster
