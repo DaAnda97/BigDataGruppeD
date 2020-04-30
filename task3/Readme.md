@@ -33,7 +33,7 @@ Hadoop is an open-source framework for working with huge data
 
 1. Load file and program into hdfs
    ``` bash
-   make add
+   make file
    ```
 
 1. Run Map-Reduce-Job:

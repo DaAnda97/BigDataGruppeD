@@ -43,8 +43,7 @@ public class HoursCount {
             context.write(key, result);
         }
     }
-
-
+    
 
     public static void run(String inputFile, String outputPath) throws Exception {
         Configuration conf = new Configuration();
