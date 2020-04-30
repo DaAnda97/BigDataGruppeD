@@ -31,6 +31,7 @@ Hadoop is an open-source framework for working with huge data
    ```
    sudo java -jar ./target/mapreduce-1.0-SNAPSHOT-jar-with-dependencies.jar HoursCount ../NASA_access_log_Jul95.txt ./output/HoursCount
    sudo java -jar ./target/mapreduce-1.0-SNAPSHOT-jar-with-dependencies.jar ResponseLengthCount ../NASA_access_log_Jul95.txt ./output/ResponseLengthCount
+   sudo java -jar ./target/mapreduce-1.0-SNAPSHOT-jar-with-dependencies.jar HostnameCount ../NASA_access_log_Jul95.txt ./output/HostnameCount
    ```
 
 ### Run with docker-cluster
