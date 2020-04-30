@@ -13,7 +13,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
 
-public class ResponseLengthCount {
+public class StatusCodeCount {
 
     public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable> {
 
@@ -25,45 +25,9 @@ public class ResponseLengthCount {
 
             LogInfo logInfo = new LogInfo();
             logInfo.parse(line);
+            String statusCode = logInfo.getReturnCode();
 
-            String responseLength = logInfo.getResponseLength();
-            String lengthClass = getLengthClass(responseLength);
-
-            context.write(new Text(lengthClass), one);
-        }
-
-        private String getLengthClass(String responseLengthString) {
-
-            if (responseLengthString.equals("-")){
-                return "-";
-            }
-
-            int responseLength = Integer.parseInt(responseLengthString);
-
-            if(responseLength == 0){
-                return "0";
-            }
-            if(responseLength < 10){
-                return "0-9";
-            }
-            if(responseLength < 100){
-                return "10-99";
-            }
-            if(responseLength < 1000){
-                return "100-999";
-            }
-            if(responseLength < 10000){
-                return "1.000-9.999";
-            }
-            if(responseLength < 100000){
-                return "10.000-99.999";
-            }
-            if(responseLength < 1000000){
-                return "100.000-999.999";
-            }
-            else {
-                return "> 1.000.000";
-            }
+            context.write(new Text(statusCode), one);
         }
     }
 
@@ -84,15 +48,14 @@ public class ResponseLengthCount {
     public static void run(String inputFile, String outputPath) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "hours count");
-        job.setJarByClass(ResponseLengthCount.class);
-        job.setMapperClass(ResponseLengthCount.TokenizerMapper.class);
-        job.setCombinerClass(ResponseLengthCount.IntSumReducer.class);
-        job.setReducerClass(ResponseLengthCount.IntSumReducer.class);
+        job.setJarByClass(StatusCodeCount.class);
+        job.setMapperClass(StatusCodeCount.TokenizerMapper.class);
+        job.setCombinerClass(StatusCodeCount.IntSumReducer.class);
+        job.setReducerClass(StatusCodeCount.IntSumReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(inputFile));
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
-
 }
