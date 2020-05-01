@@ -13,6 +13,13 @@ public class LogInfoTest {
 
     private static final String CORRUPT_LOG = "[01/Jul/1995:00:00:01 -0400] \"GET /history/apollo/ HTTP/1.0\" 200 6245";
 
+    @Test
+    public void shouldDetectDate() {
+        LogInfo info = new LogInfo();
+        info.parse(LOG);
+
+        assertEquals("SATURDAY, 1.", info.getTimeDate());
+    }
     
     @Test
     public void shouldDetectHours() {

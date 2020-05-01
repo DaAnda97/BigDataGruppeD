@@ -49,9 +49,9 @@ public class HoursCount {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "hours count");
         job.setJarByClass(HoursCount.class);
-        job.setMapperClass(TokenizerMapper.class);
-        job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(IntSumReducer.class);
+        job.setMapperClass(HoursCount.TokenizerMapper.class);
+        job.setCombinerClass(HoursCount.IntSumReducer.class);
+        job.setReducerClass(HoursCount.IntSumReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(inputFile));

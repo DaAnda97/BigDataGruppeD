@@ -60,7 +60,7 @@ public class HostnameCount {
 
     public static void run(String inputFile, String outputPath) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "hours count");
+        Job job = Job.getInstance(conf, "hostname count");
         job.setJarByClass(HostnameCount.class);
         job.setMapperClass(HostnameCount.TokenizerMapper.class);
         job.setCombinerClass(HostnameCount.IntSumReducer.class);

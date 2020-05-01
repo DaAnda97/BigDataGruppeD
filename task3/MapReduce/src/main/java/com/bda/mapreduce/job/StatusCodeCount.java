@@ -47,7 +47,7 @@ public class StatusCodeCount {
 
     public static void run(String inputFile, String outputPath) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "hours count");
+        Job job = Job.getInstance(conf, "status code count");
         job.setJarByClass(StatusCodeCount.class);
         job.setMapperClass(StatusCodeCount.TokenizerMapper.class);
         job.setCombinerClass(StatusCodeCount.IntSumReducer.class);

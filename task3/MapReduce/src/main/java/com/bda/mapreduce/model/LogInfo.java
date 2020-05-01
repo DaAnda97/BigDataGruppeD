@@ -58,6 +58,15 @@ public class LogInfo {
         return dateTime.getHour() + "";
     }
 
+    public String getTimeDate(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
+        LocalDateTime dateTime = LocalDateTime.parse(this.time, formatter);
+
+        String dayAndDate = dateTime.getDayOfWeek().toString() + ", " + dateTime.getDayOfMonth() + ".";
+
+        return dayAndDate;
+    }
+
     public String getHost() {
         return host;
     }

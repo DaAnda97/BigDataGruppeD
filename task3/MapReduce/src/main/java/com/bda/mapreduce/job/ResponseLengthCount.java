@@ -83,7 +83,7 @@ public class ResponseLengthCount {
 
     public static void run(String inputFile, String outputPath) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "hours count");
+        Job job = Job.getInstance(conf, "response length count");
         job.setJarByClass(ResponseLengthCount.class);
         job.setMapperClass(ResponseLengthCount.TokenizerMapper.class);
         job.setCombinerClass(ResponseLengthCount.IntSumReducer.class);

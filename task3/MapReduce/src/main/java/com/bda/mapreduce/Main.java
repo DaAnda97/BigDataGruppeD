@@ -1,9 +1,6 @@
 package com.bda.mapreduce;
 
-import com.bda.mapreduce.job.HostnameCount;
-import com.bda.mapreduce.job.HoursCount;
-import com.bda.mapreduce.job.ResponseLengthCount;
-import com.bda.mapreduce.job.StatusCodeCount;
+import com.bda.mapreduce.job.*;
 
 public class Main {
 
@@ -22,12 +19,16 @@ public class Main {
             case "StatusCodeCount":
                 StatusCodeCount.run(args[1], args[2]);
                 break;
+            case "DateCount":
+                DateCount.run(args[1], args[2]);
+                break;
             default:
                 System.out.println(args[0] + " is not a available Job. You can choose between "
                         + "HoursCount "
                         + "ResponseLengthCount"
                         + "HostnameCount"
-                        + "and StatusCodeCount");
+                        + "StatusCodeCount"
+                        + "and DateCount");
         }
     }
 
