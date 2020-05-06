@@ -3,6 +3,7 @@ data/
 
 NASA_access_log_Jul95.txt
 RandomIntegers.csv
+output/
 
 # Intellij
 .idea/

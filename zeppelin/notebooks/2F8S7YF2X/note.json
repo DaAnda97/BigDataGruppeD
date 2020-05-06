@@ -1,0 +1,160 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark\n\nclass LogInfo(val host: String, \n                val time: String, \n                val logLevel: String, \n                val httpVerb: String, \n                val resourcePath: String, \n                val protocol: String, \n                val returnCode: String, \n                val responseLength: String) {\n    \n}",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 13:13:52.329",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "defined class LogInfo\n"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1588746704194_1360582263",
+      "id": "20200506-063144_276114587",
+      "dateCreated": "2020-05-06 06:31:44.194",
+      "dateStarted": "2020-05-06 13:13:52.409",
+      "dateFinished": "2020-05-06 13:13:53.164",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n\ndef parse(line: String): Option[LogInfo] \u003d {\n    \n\n    var splittedLine \u003d line.replace(\"- \", \"\")\n                            .replace(\"[\", \"\")\n                            .replace(\"]\", \"\")\n                            .replace(\"\\\"\", \"\")\n                            .split(\" \")\n\n    //some logs contain protocol, some don\u0027t -\u003e Instert empty element at index 5\n    if(splittedLine.length \u003d\u003d 7){\n        splittedLine \u003d Array(splittedLine(0), splittedLine(1), splittedLine(2), splittedLine(3), splittedLine(4), \"\", splittedLine(5), splittedLine(6))\n    }\n\n    // return empty LogInfo if corrupt line\n    if (splittedLine.length \u003d\u003d 8) {\n        return Option(new LogInfo(splittedLine(0), splittedLine(1), splittedLine(2), splittedLine(3), splittedLine(4), splittedLine(5), splittedLine(6), splittedLine(7)))\n    }\n    else {\n        println(\"Unable to parse Line: \"+ line)\n        return None\n    }\n    \n}",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 13:13:53.184",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "parse: (line: String)Option[LogInfo]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1588770545695_1140118884",
+      "id": "20200506-130905_1311915365",
+      "dateCreated": "2020-05-06 13:09:05.695",
+      "dateStarted": "2020-05-06 13:13:53.259",
+      "dateFinished": "2020-05-06 13:13:53.662",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n\nval textFile \u003d sc.textFile(\"hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt\")\nval counts \u003d textFile.\n                map(line \u003d\u003e parse(line)).\n                filter(_.isDefined).\n                map(_.get).\n                map(logInfo \u003d\u003e (logInfo.returnCode, 1)).\n                reduceByKey(_ + _)\n\n\nprintln(\"\")\ncounts.collect().foreach(println(_)) ",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 13:25:37.954",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "textFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[123] at textFile at \u003cconsole\u003e:62\ncounts: org.apache.spark.rdd.RDD[(String, Int)] \u003d ShuffledRDD[128] at reduceByKey at \u003cconsole\u003e:73\n\n(500,62)\n(501,14)\n(403,54)\n(404,10791)\n(302,46567)\n(304,132626)\n(200,1699705)\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://b1bf1a4b1cf8:4040/jobs/job?id\u003d16"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1588770581685_-952634939",
+      "id": "20200506-130941_1005992339",
+      "dateCreated": "2020-05-06 13:09:41.685",
+      "dateStarted": "2020-05-06 13:25:37.995",
+      "dateFinished": "2020-05-06 13:25:50.884",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 13:13:47.683",
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "jobName": "paragraph_1588770827681_527160675",
+      "id": "20200506-131347_858003896",
+      "dateCreated": "2020-05-06 13:13:47.681",
+      "status": "READY",
+      "progressUpdateIntervalMs": 500
+    }
+  ],
+  "name": "MapReduce",
+  "id": "2F8S7YF2X",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {
+    "spark:shared_process": []
+  },
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
