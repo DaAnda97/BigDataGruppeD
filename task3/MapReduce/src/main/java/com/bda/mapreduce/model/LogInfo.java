@@ -1,64 +1,75 @@
 package com.bda.mapreduce.model;
 
-import com.bda.mapreduce.exception.LogParseException;
+import org.apache.log4j.Logger;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 public class LogInfo {
 
-    private String host;
-    private String time;
-    private String logLevel;
-    private String httpVerb;
-    private String resourcePath;
-    private String protocol;
-    private String returnCode;
-    private String responseLength;
+    private String host = "";
+    private String time = "";
+    private String logLevel = "";
+    private String httpVerb = "";
+    private String resourcePath = "";
+    private String protocol = "";
+    private String returnCode = "";
+    private String responseLength = "";
+
+    private static Logger logger = Logger.getLogger(LogInfo.class);
 
 
-    public LogInfo() {}
-
-    public void parse(String line)
-    {
-
-        try {
-             String[] splittedLine = line.replace("- ", "")
-                    .replace("[", "")
-                    .replace("]", "")
-                    .replace("\"", "")
-                    .split(" ");
-
-            this.host = splittedLine[0];
-            this.time = splittedLine[1];
-            this.logLevel = splittedLine[2];
-            this.httpVerb = splittedLine[3];
-            this.resourcePath = splittedLine[4];
-
-            //some logs contain protocol, some dont
-            if(splittedLine.length == 8){
-                this.protocol = splittedLine[5];
-            } else {
-                this.protocol = "";
-            }
-
-            this.returnCode = splittedLine[splittedLine.length - 2]; // pre last element
-            this.responseLength = splittedLine[splittedLine.length - 1]; // last element
-
-        } catch (RuntimeException e){
-            throw new LogParseException(line);
-        }
+    public LogInfo() {
     }
 
-    public String getTimeHour(){
+    public void parse(String line) {
+
+        List<String> splittedLine = new ArrayList(Arrays.asList(line.replace("- ", "")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("\"", "")
+                .split(" ")));
+
+        //some logs contain protocol, some dont
+        if (splittedLine.size() == 7) {
+            splittedLine.add(5, "");
+        }
+        if (splittedLine.size() == 8) {
+            this.host = splittedLine.get(0);
+            this.time = splittedLine.get(1);
+            this.logLevel = splittedLine.get(2);
+            this.httpVerb = splittedLine.get(3);
+            this.resourcePath = splittedLine.get(4);
+            this.protocol = splittedLine.get(5);
+            this.returnCode = splittedLine.get(6);
+            this.responseLength = splittedLine.get(7);
+        } else {
+            logger.error("Unable to parse line: " + line);
+        }
+
+    }
+
+    public String getTimeHour() {
+
+        if(this.time.equals("")){
+            return "";
+        }
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
         LocalDateTime dateTime = LocalDateTime.parse(this.time, formatter);
 
         return dateTime.getHour() + "";
     }
 
-    public String getTimeDate(){
+    public String getTimeDate() {
+
+        if(this.time.equals("")){
+            return "";
+        }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
         LocalDateTime dateTime = LocalDateTime.parse(this.time, formatter);
 
@@ -107,11 +118,17 @@ public class LogInfo {
         this.resourcePath = resourcePath;
     }
 
-    public String getProtocol() { return protocol; }
+    public String getProtocol() {
+        return protocol;
+    }
 
-    public void setProtocol(String protocol) { this.protocol = protocol; }
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
 
-    public String getReturnCode() { return returnCode; }
+    public String getReturnCode() {
+        return returnCode;
+    }
 
     public void setReturnCode(String returnCode) {
         this.returnCode = returnCode;
