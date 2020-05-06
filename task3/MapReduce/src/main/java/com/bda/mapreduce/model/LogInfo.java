@@ -1,6 +1,8 @@
 package com.bda.mapreduce.model;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +22,7 @@ public class LogInfo {
     private String returnCode = "";
     private String responseLength = "";
 
-    private static Logger logger = Logger.getLogger(LogInfo.class);
+    private static final Logger logger = LogManager.getLogger(LogInfo.class);
 
 
     public LogInfo() {
