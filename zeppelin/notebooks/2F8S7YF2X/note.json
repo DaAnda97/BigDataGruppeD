@@ -1,9 +1,9 @@
 {
   "paragraphs": [
     {
-      "text": "%spark\n\n/* ########\n * Parse Log Lines in class\n * ########\n*/\nval logFile \u003d sc.textFile(\"hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt\")\nval logRegex \u003d \"\"\"^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\"\"\".r; // https://www.regextester.com/\n\n\n\ncase class Log(host:String, date:String, responseCode:String, size:String);\n\n\n\ndef parseLog(line: String): Log \u003d {\n    val logRegex(host, date, responseCode, size) \u003d line;\n    \n    return Log(host, date, responseCode, size);\n}\n\n\n\nval logs \u003d logFile.\n                filter(line \u003d\u003e line.matches(logRegex.toString)).\n                map(line \u003d\u003e parseLog(line))\n",
+      "text": "%spark\n\n/* ########\n * Parse Log Lines in class\n * ########\n*/\nval logFile \u003d sc.textFile(\"hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt\")\nval logRegex \u003d \"\"\"^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\"\"\".r; // https://www.regextester.com/\n\n\n\ncase class Log(host:String, time:String, responseCode:String, size:String);\n\n\n\ndef parseLog(line: String): Log \u003d {\n    val logRegex(host, time, responseCode, size) \u003d line;\n    \n    return Log(host, time, responseCode, size);\n}\n\n\n\nval logs \u003d logFile.\n                filter(line \u003d\u003e line.matches(logRegex.toString)).\n                map(line \u003d\u003e parseLog(line))\n",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 18:37:32.771",
+      "dateUpdated": "2020-05-06 21:02:30.862",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -26,7 +26,7 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "logFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[341] at textFile at \u003cconsole\u003e:30\nlogRegex: scala.util.matching.Regex \u003d ^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\ndefined class Log\nparseLog: (line: String)Log\nlogs: org.apache.spark.rdd.RDD[Log] \u003d MapPartitionsRDD[343] at map at \u003cconsole\u003e:36\n"
+            "data": "logFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[623] at textFile at \u003cconsole\u003e:78\nlogRegex: scala.util.matching.Regex \u003d ^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\ndefined class Log\nparseLog: (line: String)Log\nlogs: org.apache.spark.rdd.RDD[Log] \u003d MapPartitionsRDD[625] at map at \u003cconsole\u003e:84\n"
           }
         ]
       },
@@ -34,15 +34,15 @@
       "jobName": "paragraph_1588746704194_1360582263",
       "id": "20200506-063144_276114587",
       "dateCreated": "2020-05-06 06:31:44.194",
-      "dateStarted": "2020-05-06 18:37:32.822",
-      "dateFinished": "2020-05-06 18:37:33.605",
+      "dateStarted": "2020-05-06 21:02:30.916",
+      "dateFinished": "2020-05-06 21:02:31.742",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n\n/* ########\n * How many lines didn\u0027t match\n * ########\n*/\nvar unmatchedLines \u003d logFile.count() - logs.count()",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 18:37:33.621",
+      "dateUpdated": "2020-05-06 21:02:31.795",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -76,8 +76,8 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d98",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d99"
+            "http://07c85ac8871c:4040/jobs/job?id\u003d216",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d217"
           ],
           "interpreterSettingId": "spark"
         }
@@ -86,15 +86,121 @@
       "jobName": "paragraph_1588788371852_-203794658",
       "id": "20200506-180611_249909321",
       "dateCreated": "2020-05-06 18:06:11.862",
-      "dateStarted": "2020-05-06 18:37:33.691",
-      "dateFinished": "2020-05-06 18:37:47.409",
+      "dateStarted": "2020-05-06 21:02:31.848",
+      "dateFinished": "2020-05-06 21:02:44.588",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n\n/* ########\n * How does the distribution of the cummulated calls per hour look like?\n * ########\n*/\n\nimport java.time.LocalDateTime;\nimport java.time.format.DateTimeFormatter;\nimport java.util.Locale;\n\ndef getHour(time: String): String \u003d {\n\n    val formatter \u003d DateTimeFormatter.ofPattern(\"dd/MMM/yyyy:HH:mm:ss\", Locale.ENGLISH)\n    val dateTime \u003d LocalDateTime.parse(time, formatter)\n\n    return dateTime.getHour() + \"\"\n}\n\n\n\nval hoursDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.time).\n                map(time \u003d\u003e (getHour(time), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Hour\", \"Amount\").\n                orderBy(\"Hour\")\n\n     \nz.show(hoursDf)",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 21:03:53.531",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {
+          "1": {
+            "graph": {
+              "mode": "multiBarChart",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "Hour": "string",
+                      "Amount": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "Hour",
+                  "index": 0.0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "Amount",
+                  "index": 1.0,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "import java.time.LocalDateTime\nimport java.time.format.DateTimeFormatter\nimport java.util.Locale\ngetHour: (time: String)String\nhoursDf: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] \u003d [Hour: string, Amount: int]\n"
+          },
+          {
+            "type": "TABLE",
+            "data": "Hour\tAmount\n0\t62450\n1\t53066\n10\t105507\n11\t115720\n12\t122085\n13\t120814\n14\t122479\n15\t121200\n16\t118037\n17\t97609\n18\t79282\n19\t71776\n2\t45297\n20\t69809\n21\t71922\n22\t70759\n23\t69362\n3\t37398\n4\t32234\n5\t31919\n6\t35253\n7\t54017\n8\t83750\n9\t99969\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://07c85ac8871c:4040/jobs/job?id\u003d218"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1588797606295_-1644255819",
+      "id": "20200506-204006_525974039",
+      "dateCreated": "2020-05-06 20:40:06.300",
+      "dateStarted": "2020-05-06 21:02:44.720",
+      "dateFinished": "2020-05-06 21:02:58.141",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n\n/* ########\n * How does the distribution of the ErrorCodes look like\n * ########\n*/\nval errorCodeDf \u003d logs.\n                    map(logInfo \u003d\u003e (logInfo.responseCode, 1)).\n                    reduceByKey(_ + _).\n                    toDF(\"Error Code\", \"Amount\")\n                        \nz.show(errorCodeDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 18:38:12.185",
+      "dateUpdated": "2020-05-06 21:03:53.607",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -165,10 +271,10 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d100",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d101",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d102",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d103"
+            "http://07c85ac8871c:4040/jobs/job?id\u003d219",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d220",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d221",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d222"
           ],
           "interpreterSettingId": "spark"
         }
@@ -177,15 +283,15 @@
       "jobName": "paragraph_1588783676170_1991678767",
       "id": "20200506-164756_168100534",
       "dateCreated": "2020-05-06 16:47:56.170",
-      "dateStarted": "2020-05-06 18:37:47.506",
-      "dateFinished": "2020-05-06 18:37:58.742",
+      "dateStarted": "2020-05-06 21:02:58.301",
+      "dateFinished": "2020-05-06 21:03:09.302",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n\n/* ########\n * How high is the fraction of the resolved hosts?\n * ########\n*/\nval ipRegex \u003d \"\"\"^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$\"\"\"\n\n\ndef hostOrIp(host: String): String \u003d {\n    \n    if (host.matches(ipRegex)){\n        return \"Unresolved (Ip)\"\n    } else {\n        return \"Resolved (Hostname)\"\n    }\n    \n}\n\n\n\nval hostDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.host).\n                map(host \u003d\u003e (hostOrIp(host), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Host\", \"Amount\")\n\n\n     \nz.show(hostDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 18:37:58.832",
+      "dateUpdated": "2020-05-06 21:03:09.312",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -232,10 +338,10 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d104",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d105",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d106",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d107"
+            "http://07c85ac8871c:4040/jobs/job?id\u003d223",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d224",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d225",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d226"
           ],
           "interpreterSettingId": "spark"
         }
@@ -244,15 +350,241 @@
       "jobName": "paragraph_1588777528880_945552864",
       "id": "20200506-150528_1539948500",
       "dateCreated": "2020-05-06 15:05:28.880",
-      "dateStarted": "2020-05-06 18:37:58.867",
-      "dateFinished": "2020-05-06 18:38:12.040",
+      "dateStarted": "2020-05-06 21:03:09.426",
+      "dateFinished": "2020-05-06 21:03:22.676",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n/* ########\n * What\u0027s the distribution of the return sizes\n * ########\n*/\ndef categorizeSize(sizeString: String): String \u003d {\n    \n    if (sizeString.equals(\"-\")){\n        return \"-;a\";\n    }\n\n    val size \u003d Integer.parseInt(sizeString);\n\n    if(size \u003d\u003d 0){\n        return \"0;b\";\n    }\n    if(size \u003c 10){\n        return \"0-9;c\";\n    }\n    if(size \u003c 100){\n        return \"10-99;d\";\n    }\n    if(size \u003c 1000){\n        return \"100-999;e\";\n    }\n    if(size \u003c 10000){\n        return \"1.000-9.999;f\";\n    }\n    if(size \u003c 100000){\n        return \"10.000-99.999;g\";\n    }\n    if(size \u003c 1000000){\n        return \"100.000-999.999;h\";\n    }\n    else {\n        return \"\u003e 1.000.000;i\";\n    }\n    \n}\n\nvar responseLengthDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.size).\n                map(size \u003d\u003e (categorizeSize(size), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Size;Index\", \"Amount\")\n\n// for correct order sort by index\nresponseLengthDf \u003d responseLengthDf.withColumn(\"tmp\", split($\"Size;Index\", \";\")).\n                                    withColumn(\"Size\", $\"tmp\"(0)).\n                                    withColumn(\"Index\", $\"tmp\"(1)).\n                                    withColumn(\"Amount\", $\"Amount\").\n                                    drop(\"Size;Index\", \"tmp\").\n                                    orderBy(asc(\"Index\"))\n     \nz.show(responseLengthDf)",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 21:03:53.746",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {
+          "1": {
+            "graph": {
+              "mode": "multiBarChart",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default",
+                  "stacked": false
+                },
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "Amount": "string",
+                      "Size": "string",
+                      "Index": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "stackedAreaChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "lineChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "Size",
+                  "index": 1.0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "Amount",
+                  "index": 0.0,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "categorizeSize: (sizeString: String)String\nresponseLengthDf: org.apache.spark.sql.DataFrame \u003d [Size;Index: string, Amount: int]\nresponseLengthDf: org.apache.spark.sql.DataFrame \u003d [Amount: int, Size: string ... 1 more field]\n"
+          },
+          {
+            "type": "TABLE",
+            "data": "Amount\tSize\tIndex\n19726\t-\ta\n139617\t0\tb\n21582\t10-99\td\n393314\t100-999\te\n813016\t1.000-9.999\tf\n435504\t10.000-99.999\tg\n65852\t100.000-999.999\th\n3103\t\u003e 1.000.000\ti\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://07c85ac8871c:4040/jobs/job?id\u003d227"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1588789274261_-278474027",
+      "id": "20200506-182114_608729059",
+      "dateCreated": "2020-05-06 18:21:14.261",
+      "dateStarted": "2020-05-06 21:03:22.768",
+      "dateFinished": "2020-05-06 21:03:35.752",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n\n/* ########\n * How does the distribution of the calls per day look like?\n * ########\n*/\n\nimport java.time.LocalDateTime;\nimport java.time.format.DateTimeFormatter;\nimport java.util.Locale;\n\ndef getDate(time: String): String \u003d {\n\n    val formatter \u003d DateTimeFormatter.ofPattern(\"dd/MMM/yyyy:HH:mm:ss\", Locale.ENGLISH)\n    val dateTime \u003d LocalDateTime.parse(time, formatter)\n    \n    val zeroIfSmaller10 \u003d if (dateTime.getDayOfMonth \u003c\u003d 9) \"0\" else \"\"\n\n    return zeroIfSmaller10 + dateTime.getDayOfMonth() + \" (\" + dateTime.getDayOfWeek().toString.toLowerCase().substring(0,2) + \")\"\n}\n\n\n\nval hoursDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.time).\n                map(time \u003d\u003e (getDate(time), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Date\", \"Amount\").\n                orderBy(asc(\"Date\"))\n\n     \nz.show(hoursDf)",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 21:03:53.886",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {
+          "1": {
+            "graph": {
+              "mode": "multiBarChart",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "Date": "string",
+                      "Amount": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "Date",
+                  "index": 0.0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "Amount",
+                  "index": 1.0,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "import java.time.LocalDateTime\nimport java.time.format.DateTimeFormatter\nimport java.util.Locale\ngetDate: (time: String)String\nhoursDf: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] \u003d [Date: string, Amount: int]\n"
+          },
+          {
+            "type": "TABLE",
+            "data": "Date\tAmount\n01 (sa)\t64714\n02 (su)\t60265\n03 (mo)\t89584\n04 (tu)\t70452\n05 (we)\t94575\n06 (th)\t100960\n07 (fr)\t87233\n08 (sa)\t38867\n09 (su)\t35272\n10 (mo)\t72860\n11 (tu)\t80407\n12 (we)\t92536\n13 (th)\t134203\n14 (fr)\t84103\n15 (sa)\t45532\n16 (su)\t47854\n17 (mo)\t74981\n18 (tu)\t64282\n19 (we)\t72738\n20 (th)\t66593\n21 (fr)\t64629\n22 (sa)\t35267\n23 (su)\t39199\n24 (mo)\t64259\n25 (tu)\t62699\n26 (we)\t58849\n27 (th)\t61680\n28 (fr)\t27121\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://07c85ac8871c:4040/jobs/job?id\u003d228"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1588790665200_1606086220",
+      "id": "20200506-184425_938520584",
+      "dateCreated": "2020-05-06 18:44:25.200",
+      "dateStarted": "2020-05-06 21:03:35.834",
+      "dateFinished": "2020-05-06 21:03:51.915",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 18:38:12.092",
+      "dateUpdated": "2020-05-06 21:03:51.960",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -271,9 +603,9 @@
         "forms": {}
       },
       "apps": [],
-      "jobName": "paragraph_1588789274261_-278474027",
-      "id": "20200506-182114_608729059",
-      "dateCreated": "2020-05-06 18:21:14.261",
+      "jobName": "paragraph_1588798223280_2111775547",
+      "id": "20200506-205023_366074025",
+      "dateCreated": "2020-05-06 20:50:23.280",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     }
