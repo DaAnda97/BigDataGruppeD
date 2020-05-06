@@ -1,9 +1,9 @@
 {
   "paragraphs": [
     {
-      "text": "%spark\n\nclass LogInfo(val host: String, \n                val time: String, \n                val logLevel: String, \n                val httpVerb: String, \n                val resourcePath: String, \n                val protocol: String, \n                val returnCode: String, \n                val responseLength: String) {\n    \n}",
+      "text": "%spark\n\n/* ########\n * Parse Log Lines in class\n * ########\n*/\nval logFile \u003d sc.textFile(\"hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt\")\nval logRegex \u003d \"\"\"^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\"\"\".r; // https://www.regextester.com/\n\n\n\ncase class Log(host:String, date:String, responseCode:String, size:String);\n\n\n\ndef parseLog(line: String): Log \u003d {\n    val logRegex(host, date, responseCode, size) \u003d line;\n    \n    return Log(host, date, responseCode, size);\n}\n\n\n\nval logs \u003d logFile.\n                filter(line \u003d\u003e line.matches(logRegex.toString)).\n                map(line \u003d\u003e parseLog(line))\n",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 13:59:20.459",
+      "dateUpdated": "2020-05-06 18:37:32.771",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -26,7 +26,7 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "defined class LogInfo\n"
+            "data": "logFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[341] at textFile at \u003cconsole\u003e:30\nlogRegex: scala.util.matching.Regex \u003d ^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\ndefined class Log\nparseLog: (line: String)Log\nlogs: org.apache.spark.rdd.RDD[Log] \u003d MapPartitionsRDD[343] at map at \u003cconsole\u003e:36\n"
           }
         ]
       },
@@ -34,15 +34,15 @@
       "jobName": "paragraph_1588746704194_1360582263",
       "id": "20200506-063144_276114587",
       "dateCreated": "2020-05-06 06:31:44.194",
-      "dateStarted": "2020-05-06 13:59:20.596",
-      "dateFinished": "2020-05-06 13:59:20.899",
+      "dateStarted": "2020-05-06 18:37:32.822",
+      "dateFinished": "2020-05-06 18:37:33.605",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
-      "text": "%spark\n\ndef parse(line: String): Option[LogInfo] \u003d {\n\n    var splittedLine \u003d line.replace(\"- \", \"\")\n                            .replace(\"[\", \"\")\n                            .replace(\"]\", \"\")\n                            .replace(\"\\\"\", \"\")\n                            .split(\" \")\n\n    //some logs contain protocol, some don\u0027t -\u003e Instert empty element at index 5\n    if(splittedLine.length \u003d\u003d 7){\n        splittedLine \u003d Array(splittedLine(0), splittedLine(1), splittedLine(2), splittedLine(3), splittedLine(4), \"\", splittedLine(5), splittedLine(6))\n    }\n\n    // return empty LogInfo if corrupt line\n    if (splittedLine.length \u003d\u003d 8) {\n        return Option(new LogInfo(splittedLine(0), splittedLine(1), splittedLine(2), splittedLine(3), splittedLine(4), splittedLine(5), splittedLine(6), splittedLine(7)))\n    }\n    else {\n        println(\"Unable to parse Line: \"+ line)\n        return None\n    }\n    \n}",
+      "text": "%spark\n\n/* ########\n * How many lines didn\u0027t match\n * ########\n*/\nvar unmatchedLines \u003d logFile.count() - logs.count()",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 13:59:20.989",
+      "dateUpdated": "2020-05-06 18:37:33.621",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -65,23 +65,36 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "parse: (line: String)Option[LogInfo]\n"
+            "data": "unmatchedLines: Long \u003d 0\n"
           }
         ]
       },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://07c85ac8871c:4040/jobs/job?id\u003d98",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d99"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
       "apps": [],
-      "jobName": "paragraph_1588770545695_1140118884",
-      "id": "20200506-130905_1311915365",
-      "dateCreated": "2020-05-06 13:09:05.695",
-      "dateStarted": "2020-05-06 13:59:21.025",
-      "dateFinished": "2020-05-06 13:59:21.409",
+      "jobName": "paragraph_1588788371852_-203794658",
+      "id": "20200506-180611_249909321",
+      "dateCreated": "2020-05-06 18:06:11.862",
+      "dateStarted": "2020-05-06 18:37:33.691",
+      "dateFinished": "2020-05-06 18:37:47.409",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
-      "text": "%spark\n\nval textFile \u003d sc.textFile(\"hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt\")\nval counts \u003d textFile.\n                map(line \u003d\u003e parse(line)).\n                filter(_.isDefined).\n                map(_.get).\n                map(logInfo \u003d\u003e (logInfo.returnCode, 1)).\n                reduceByKey(_ + _)\n\n\nval errorCodeDf \u003d counts.toDF(\"Error Code\", \"Amount\")\nz.show(errorCodeDf)",
+      "text": "%spark\n\n/* ########\n * How does the distribution of the ErrorCodes look like\n * ########\n*/\nval errorCodeDf \u003d logs.\n                    map(logInfo \u003d\u003e (logInfo.responseCode, 1)).\n                    reduceByKey(_ + _).\n                    toDF(\"Error Code\", \"Amount\")\n                        \nz.show(errorCodeDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 14:01:45.610",
+      "dateUpdated": "2020-05-06 18:38:12.185",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -94,12 +107,6 @@
               "optionOpen": false,
               "setting": {
                 "multiBarChart": {
-                  "rotate": {
-                    "degree": "-45"
-                  },
-                  "xLabelStatus": "default"
-                },
-                "lineChart": {
                   "rotate": {
                     "degree": "-45"
                   },
@@ -143,11 +150,11 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "textFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[145] at textFile at \u003cconsole\u003e:62\ncounts: org.apache.spark.rdd.RDD[(String, Int)] \u003d ShuffledRDD[150] at reduceByKey at \u003cconsole\u003e:73\nerrorCodeDf: org.apache.spark.sql.DataFrame \u003d [Error Code: string, Amount: int]\n"
+            "data": "errorCodeDf: org.apache.spark.sql.DataFrame \u003d [Error Code: string, Amount: int]\n"
           },
           {
             "type": "TABLE",
-            "data": "Error Code\tAmount\n500\t62\n501\t14\n403\t54\n404\t10791\n302\t46567\n304\t132626\n200\t1699705\n"
+            "data": "Error Code\tAmount\n500\t62\n501\t14\n400\t5\n403\t54\n404\t10845\n302\t46573\n304\t132627\n200\t1701534\n"
           }
         ]
       },
@@ -158,27 +165,94 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://b1bf1a4b1cf8:4040/jobs/job?id\u003d26",
-            "http://b1bf1a4b1cf8:4040/jobs/job?id\u003d27",
-            "http://b1bf1a4b1cf8:4040/jobs/job?id\u003d28",
-            "http://b1bf1a4b1cf8:4040/jobs/job?id\u003d29"
+            "http://07c85ac8871c:4040/jobs/job?id\u003d100",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d101",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d102",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d103"
           ],
           "interpreterSettingId": "spark"
         }
       },
       "apps": [],
-      "jobName": "paragraph_1588770581685_-952634939",
-      "id": "20200506-130941_1005992339",
-      "dateCreated": "2020-05-06 13:09:41.685",
-      "dateStarted": "2020-05-06 13:59:21.506",
-      "dateFinished": "2020-05-06 13:59:57.306",
+      "jobName": "paragraph_1588783676170_1991678767",
+      "id": "20200506-164756_168100534",
+      "dateCreated": "2020-05-06 16:47:56.170",
+      "dateStarted": "2020-05-06 18:37:47.506",
+      "dateFinished": "2020-05-06 18:37:58.742",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n\n/* ########\n * How high is the fraction of the resolved hosts?\n * ########\n*/\nval ipRegex \u003d \"\"\"^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$\"\"\"\n\n\ndef hostOrIp(host: String): String \u003d {\n    \n    if (host.matches(ipRegex)){\n        return \"Unresolved (Ip)\"\n    } else {\n        return \"Resolved (Hostname)\"\n    }\n    \n}\n\n\n\nval hostDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.host).\n                map(host \u003d\u003e (hostOrIp(host), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Host\", \"Amount\")\n\n\n     \nz.show(hostDf)",
+      "user": "anonymous",
+      "dateUpdated": "2020-05-06 18:37:58.832",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {
+          "1": {
+            "graph": {
+              "mode": "pieChart",
+              "height": 300.0,
+              "optionOpen": false
+            },
+            "helium": {}
+          }
+        },
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "ipRegex: String \u003d ^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$\nhostOrIp: (host: String)String\nhostDf: org.apache.spark.sql.DataFrame \u003d [Host: string, Amount: int]\n"
+          },
+          {
+            "type": "TABLE",
+            "data": "Host\tAmount\nUnresolved (Ip)\t419140\nResolved (Hostname)\t1472574\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://07c85ac8871c:4040/jobs/job?id\u003d104",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d105",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d106",
+            "http://07c85ac8871c:4040/jobs/job?id\u003d107"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1588777528880_945552864",
+      "id": "20200506-150528_1539948500",
+      "dateCreated": "2020-05-06 15:05:28.880",
+      "dateStarted": "2020-05-06 18:37:58.867",
+      "dateFinished": "2020-05-06 18:38:12.040",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 13:59:57.501",
+      "dateUpdated": "2020-05-06 18:38:12.092",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -197,9 +271,9 @@
         "forms": {}
       },
       "apps": [],
-      "jobName": "paragraph_1588773217525_-1116442736",
-      "id": "20200506-135337_272275491",
-      "dateCreated": "2020-05-06 13:53:37.531",
+      "jobName": "paragraph_1588789274261_-278474027",
+      "id": "20200506-182114_608729059",
+      "dateCreated": "2020-05-06 18:21:14.261",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     }

@@ -1,5 +1,5 @@
 # Spark with Zeppelin Notebook
-Hadoop is an open-source framework for working with huge data
+The map reduce jobs from task3 as spark jobs in scala
 
 ## Data
 
