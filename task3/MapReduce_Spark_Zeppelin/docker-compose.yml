@@ -5,7 +5,6 @@ services:
   master:
     image: bde2020/hadoop-namenode:1.2.1-hadoop2.8-java8
     container_name: master
-    restart: always
     ports:
       - 9870:9870
       - 9000:9000
@@ -34,7 +33,6 @@ services:
   node02:
     image: bde2020/hadoop-datanode:1.2.1-hadoop2.8-java8
     container_name: node02
-    restart: always
     volumes:
       - ./data/node02:/hadoop/dfs/data
     environment:
@@ -47,7 +45,6 @@ services:
   node03:
     image: bde2020/hadoop-datanode:1.2.1-hadoop2.8-java8
     container_name: node03
-    restart: always
     volumes:
       - ./data/node03:/hadoop/dfs/data
     environment:

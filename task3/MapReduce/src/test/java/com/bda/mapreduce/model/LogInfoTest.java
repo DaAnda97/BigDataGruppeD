@@ -15,31 +15,24 @@ public class LogInfoTest {
 
     @Test
     public void shouldDetectDate() {
-        LogInfo info = new LogInfo();
-        info.parse(LOG);
+        LogInfo info = new LogInfo().parse(LOG);
 
         assertEquals("SATURDAY, 1.", info.getTimeDate());
     }
 
     @Test
     public void shouldDetectHours() {
-        LogInfo info = new LogInfo();
-        info.parse(LOG);
+        LogInfo info = new LogInfo().parse(LOG);
 
         assertEquals("0", info.getTimeHour());
     }
 
     @Test
     public void shouldReturnEmptyLogInfo() {
-        LogInfo info = new LogInfo();
-        info.parse(CORRUPT_LOG);
+        LogInfo info = new LogInfo().parse(CORRUPT_LOG);
 
         assertEquals("", info.getHost());
         assertEquals("", info.getTime());
-        assertEquals("", info.getLogLevel());
-        assertEquals("", info.getHttpVerb());
-        assertEquals("", info.getResourcePath());
-        assertEquals("", info.getProtocol());
         assertEquals("", info.getReturnCode());
         assertEquals("", info.getResponseLength());
     }
@@ -47,45 +40,30 @@ public class LogInfoTest {
 
     @Test
     public void shouldParseLog3Correctly() {
-        LogInfo info = new LogInfo();
-        info.parse(LOG_3);
+        LogInfo info = new LogInfo().parse(LOG_3);
 
         assertEquals("pipe6.nyc.pipeline.com", info.getHost());
         assertEquals("01/Jul/1995:00:22:43", info.getTime());
-        assertEquals("-0400", info.getLogLevel());
-        assertEquals("GET", info.getHttpVerb());
-        assertEquals("/shuttle/missions/sts-71/movies/sts-71-mir-dock.mpg", info.getResourcePath());
-        assertEquals("", info.getProtocol());
         assertEquals("200", info.getReturnCode());
         assertEquals("946425", info.getResponseLength());
     }
 
     @Test
     public void shouldParseLog2Correctly() {
-        LogInfo info = new LogInfo();
-        info.parse(LOG_2);
+        LogInfo info = new LogInfo().parse(LOG_2);
 
         assertEquals("waters-gw.starway.net.au", info.getHost());
         assertEquals("01/Jul/1995:00:00:25", info.getTime());
-        assertEquals("-0400", info.getLogLevel());
-        assertEquals("GET", info.getHttpVerb());
-        assertEquals("/shuttle/missions/51-l/mission-51-l.html", info.getResourcePath());
-        assertEquals("HTTP/1.0", info.getProtocol());
         assertEquals("200", info.getReturnCode());
         assertEquals("6723", info.getResponseLength());
     }
 
     @Test
     public void shouldParseLogCorrectly() {
-        LogInfo info = new LogInfo();
-        info.parse(LOG);
+        LogInfo info = new LogInfo().parse(LOG);
 
         assertEquals("199.72.81.55", info.getHost());
         assertEquals("01/Jul/1995:00:00:01", info.getTime());
-        assertEquals("-0400", info.getLogLevel());
-        assertEquals("GET", info.getHttpVerb());
-        assertEquals("/history/apollo/", info.getResourcePath());
-        assertEquals("HTTP/1.0", info.getProtocol());
         assertEquals("200", info.getReturnCode());
         assertEquals("6245", info.getResponseLength());
     }

@@ -23,8 +23,7 @@ public class StatusCodeCount {
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
 
-            LogInfo logInfo = new LogInfo();
-            logInfo.parse(line);
+            LogInfo logInfo = new LogInfo().parse(line);
             String statusCode = logInfo.getReturnCode();
 
             context.write(new Text(statusCode), one);

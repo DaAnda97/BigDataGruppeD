@@ -23,8 +23,7 @@ public class ResponseLengthCount {
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
 
-            LogInfo logInfo = new LogInfo();
-            logInfo.parse(line);
+            LogInfo logInfo = new LogInfo().parse(line);
 
             String responseLength = logInfo.getResponseLength();
             String lengthClass = getLengthClass(responseLength);

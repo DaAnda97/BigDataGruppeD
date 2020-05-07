@@ -3,7 +3,7 @@
     {
       "text": "%spark\n\n/* ########\n * Parse Log Lines in class\n * ########\n*/\nval logFile \u003d sc.textFile(\"hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt\")\nval logRegex \u003d \"\"\"^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\"\"\".r; // https://www.regextester.com/\n\n\n\ncase class Log(host:String, time:String, responseCode:String, size:String);\n\n\n\ndef parseLog(line: String): Log \u003d {\n    val logRegex(host, time, responseCode, size) \u003d line;\n    \n    return Log(host, time, responseCode, size);\n}\n\n\n\nval logs \u003d logFile.\n                filter(line \u003d\u003e line.matches(logRegex.toString)).\n                map(line \u003d\u003e parseLog(line))\n",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 21:02:30.862",
+      "dateUpdated": "2020-05-07 11:23:06.713",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -26,7 +26,7 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "logFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[623] at textFile at \u003cconsole\u003e:78\nlogRegex: scala.util.matching.Regex \u003d ^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\ndefined class Log\nparseLog: (line: String)Log\nlogs: org.apache.spark.rdd.RDD[Log] \u003d MapPartitionsRDD[625] at map at \u003cconsole\u003e:84\n"
+            "data": "logFile: org.apache.spark.rdd.RDD[String] \u003d hdfs://master:9000/bda_course/exercise01/NASA_access_log_Jul95.txt MapPartitionsRDD[1] at textFile at \u003cconsole\u003e:30\nlogRegex: scala.util.matching.Regex \u003d ^(\\S+) - - \\[(\\S+) -\\S+] \".* (\\S+) (\\S+)$\ndefined class Log\nparseLog: (line: String)Log\nlogs: org.apache.spark.rdd.RDD[Log] \u003d MapPartitionsRDD[3] at map at \u003cconsole\u003e:36\n"
           }
         ]
       },
@@ -34,15 +34,15 @@
       "jobName": "paragraph_1588746704194_1360582263",
       "id": "20200506-063144_276114587",
       "dateCreated": "2020-05-06 06:31:44.194",
-      "dateStarted": "2020-05-06 21:02:30.916",
-      "dateFinished": "2020-05-06 21:02:31.742",
+      "dateStarted": "2020-05-07 11:23:06.878",
+      "dateFinished": "2020-05-07 11:24:06.687",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n\n/* ########\n * How many lines didn\u0027t match\n * ########\n*/\nvar unmatchedLines \u003d logFile.count() - logs.count()",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 21:02:31.795",
+      "dateUpdated": "2020-05-07 11:24:20.285",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -76,8 +76,8 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d216",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d217"
+            "http://37d913250da8:4040/jobs/job?id\u003d0",
+            "http://37d913250da8:4040/jobs/job?id\u003d1"
           ],
           "interpreterSettingId": "spark"
         }
@@ -86,15 +86,15 @@
       "jobName": "paragraph_1588788371852_-203794658",
       "id": "20200506-180611_249909321",
       "dateCreated": "2020-05-06 18:06:11.862",
-      "dateStarted": "2020-05-06 21:02:31.848",
-      "dateFinished": "2020-05-06 21:02:44.588",
+      "dateStarted": "2020-05-07 11:24:20.406",
+      "dateFinished": "2020-05-07 11:25:41.550",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n\n/* ########\n * How does the distribution of the cummulated calls per hour look like?\n * ########\n*/\n\nimport java.time.LocalDateTime;\nimport java.time.format.DateTimeFormatter;\nimport java.util.Locale;\n\ndef getHour(time: String): String \u003d {\n\n    val formatter \u003d DateTimeFormatter.ofPattern(\"dd/MMM/yyyy:HH:mm:ss\", Locale.ENGLISH)\n    val dateTime \u003d LocalDateTime.parse(time, formatter)\n\n    return dateTime.getHour() + \"\"\n}\n\n\n\nval hoursDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.time).\n                map(time \u003d\u003e (getHour(time), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Hour\", \"Amount\").\n                orderBy(\"Hour\")\n\n     \nz.show(hoursDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 21:03:53.531",
+      "dateUpdated": "2020-05-07 11:28:03.424",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -183,7 +183,7 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d218"
+            "http://37d913250da8:4040/jobs/job?id\u003d2"
           ],
           "interpreterSettingId": "spark"
         }
@@ -192,15 +192,15 @@
       "jobName": "paragraph_1588797606295_-1644255819",
       "id": "20200506-204006_525974039",
       "dateCreated": "2020-05-06 20:40:06.300",
-      "dateStarted": "2020-05-06 21:02:44.720",
-      "dateFinished": "2020-05-06 21:02:58.141",
+      "dateStarted": "2020-05-07 11:25:48.600",
+      "dateFinished": "2020-05-07 11:27:07.410",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "%spark\n\n/* ########\n * How does the distribution of the ErrorCodes look like\n * ########\n*/\nval errorCodeDf \u003d logs.\n                    map(logInfo \u003d\u003e (logInfo.responseCode, 1)).\n                    reduceByKey(_ + _).\n                    toDF(\"Error Code\", \"Amount\")\n                        \nz.show(errorCodeDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 21:03:53.607",
+      "dateUpdated": "2020-05-07 11:30:50.194",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -271,10 +271,10 @@
           "tooltip": "View in Spark web UI",
           "group": "spark",
           "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d219",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d220",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d221",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d222"
+            "http://37d913250da8:4040/jobs/job?id\u003d3",
+            "http://37d913250da8:4040/jobs/job?id\u003d4",
+            "http://37d913250da8:4040/jobs/job?id\u003d5",
+            "http://37d913250da8:4040/jobs/job?id\u003d6"
           ],
           "interpreterSettingId": "spark"
         }
@@ -283,8 +283,8 @@
       "jobName": "paragraph_1588783676170_1991678767",
       "id": "20200506-164756_168100534",
       "dateCreated": "2020-05-06 16:47:56.170",
-      "dateStarted": "2020-05-06 21:02:58.301",
-      "dateFinished": "2020-05-06 21:03:09.302",
+      "dateStarted": "2020-05-07 11:30:22.031",
+      "dateFinished": "2020-05-07 11:30:49.432",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
@@ -331,21 +331,6 @@
           }
         ]
       },
-      "runtimeInfos": {
-        "jobUrl": {
-          "propertyName": "jobUrl",
-          "label": "SPARK JOB",
-          "tooltip": "View in Spark web UI",
-          "group": "spark",
-          "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d223",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d224",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d225",
-            "http://07c85ac8871c:4040/jobs/job?id\u003d226"
-          ],
-          "interpreterSettingId": "spark"
-        }
-      },
       "apps": [],
       "jobName": "paragraph_1588777528880_945552864",
       "id": "20200506-150528_1539948500",
@@ -358,7 +343,7 @@
     {
       "text": "%spark\n/* ########\n * What\u0027s the distribution of the return sizes\n * ########\n*/\ndef categorizeSize(sizeString: String): String \u003d {\n    \n    if (sizeString.equals(\"-\")){\n        return \"-;a\";\n    }\n\n    val size \u003d Integer.parseInt(sizeString);\n\n    if(size \u003d\u003d 0){\n        return \"0;b\";\n    }\n    if(size \u003c 10){\n        return \"0-9;c\";\n    }\n    if(size \u003c 100){\n        return \"10-99;d\";\n    }\n    if(size \u003c 1000){\n        return \"100-999;e\";\n    }\n    if(size \u003c 10000){\n        return \"1.000-9.999;f\";\n    }\n    if(size \u003c 100000){\n        return \"10.000-99.999;g\";\n    }\n    if(size \u003c 1000000){\n        return \"100.000-999.999;h\";\n    }\n    else {\n        return \"\u003e 1.000.000;i\";\n    }\n    \n}\n\nvar responseLengthDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.size).\n                map(size \u003d\u003e (categorizeSize(size), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Size;Index\", \"Amount\")\n\n// for correct order sort by index\nresponseLengthDf \u003d responseLengthDf.withColumn(\"tmp\", split($\"Size;Index\", \";\")).\n                                    withColumn(\"Size\", $\"tmp\"(0)).\n                                    withColumn(\"Index\", $\"tmp\"(1)).\n                                    withColumn(\"Amount\", $\"Amount\").\n                                    drop(\"Size;Index\", \"tmp\").\n                                    orderBy(asc(\"Index\"))\n     \nz.show(responseLengthDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 21:03:53.746",
+      "dateUpdated": "2020-05-07 11:22:30.335",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -454,18 +439,6 @@
           }
         ]
       },
-      "runtimeInfos": {
-        "jobUrl": {
-          "propertyName": "jobUrl",
-          "label": "SPARK JOB",
-          "tooltip": "View in Spark web UI",
-          "group": "spark",
-          "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d227"
-          ],
-          "interpreterSettingId": "spark"
-        }
-      },
       "apps": [],
       "jobName": "paragraph_1588789274261_-278474027",
       "id": "20200506-182114_608729059",
@@ -478,7 +451,7 @@
     {
       "text": "%spark\n\n/* ########\n * How does the distribution of the calls per day look like?\n * ########\n*/\n\nimport java.time.LocalDateTime;\nimport java.time.format.DateTimeFormatter;\nimport java.util.Locale;\n\ndef getDate(time: String): String \u003d {\n\n    val formatter \u003d DateTimeFormatter.ofPattern(\"dd/MMM/yyyy:HH:mm:ss\", Locale.ENGLISH)\n    val dateTime \u003d LocalDateTime.parse(time, formatter)\n    \n    val zeroIfSmaller10 \u003d if (dateTime.getDayOfMonth \u003c\u003d 9) \"0\" else \"\"\n\n    return zeroIfSmaller10 + dateTime.getDayOfMonth() + \" (\" + dateTime.getDayOfWeek().toString.toLowerCase().substring(0,2) + \")\"\n}\n\n\n\nval hoursDf \u003d logs.\n                map(logInfo \u003d\u003e logInfo.time).\n                map(time \u003d\u003e (getDate(time), 1)).\n                reduceByKey(_ + _).\n                toDF(\"Date\", \"Amount\").\n                orderBy(asc(\"Date\"))\n\n     \nz.show(hoursDf)",
       "user": "anonymous",
-      "dateUpdated": "2020-05-06 21:03:53.886",
+      "dateUpdated": "2020-05-07 11:22:29.190",
       "config": {
         "colWidth": 12.0,
         "fontSize": 9.0,
@@ -559,18 +532,6 @@
             "data": "Date\tAmount\n01 (sa)\t64714\n02 (su)\t60265\n03 (mo)\t89584\n04 (tu)\t70452\n05 (we)\t94575\n06 (th)\t100960\n07 (fr)\t87233\n08 (sa)\t38867\n09 (su)\t35272\n10 (mo)\t72860\n11 (tu)\t80407\n12 (we)\t92536\n13 (th)\t134203\n14 (fr)\t84103\n15 (sa)\t45532\n16 (su)\t47854\n17 (mo)\t74981\n18 (tu)\t64282\n19 (we)\t72738\n20 (th)\t66593\n21 (fr)\t64629\n22 (sa)\t35267\n23 (su)\t39199\n24 (mo)\t64259\n25 (tu)\t62699\n26 (we)\t58849\n27 (th)\t61680\n28 (fr)\t27121\n"
           }
         ]
-      },
-      "runtimeInfos": {
-        "jobUrl": {
-          "propertyName": "jobUrl",
-          "label": "SPARK JOB",
-          "tooltip": "View in Spark web UI",
-          "group": "spark",
-          "values": [
-            "http://07c85ac8871c:4040/jobs/job?id\u003d228"
-          ],
-          "interpreterSettingId": "spark"
-        }
       },
       "apps": [],
       "jobName": "paragraph_1588790665200_1606086220",

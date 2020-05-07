@@ -23,8 +23,7 @@ public class HoursCount {
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
 
-            LogInfo logInfo = new LogInfo();
-            logInfo.parse(line);
+            LogInfo logInfo = new LogInfo().parse(line);
             String hour = logInfo.getTimeHour();
 
             context.write(new Text(hour), one);
