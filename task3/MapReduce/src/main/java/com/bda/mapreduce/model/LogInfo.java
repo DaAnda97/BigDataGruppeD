@@ -61,7 +61,7 @@ public class LogInfo {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
         LocalDateTime dateTime = LocalDateTime.parse(this.time, formatter);
 
-        String dayAndDate = dateTime.getDayOfMonth() + " (" + dateTime.getDayOfWeek().toString().toLowerCase().substring(0,2) + ")";
+        String dayAndDate = (dateTime.getDayOfMonth() <= 9 ? "0" : "") + dateTime.getDayOfMonth() + " (" + dateTime.getDayOfWeek().toString().toLowerCase().substring(0,2) + ")";
 
         return dayAndDate;
     }
