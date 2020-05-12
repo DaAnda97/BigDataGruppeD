@@ -22,13 +22,17 @@ public class Main {
             case "DateCount":
                 DateCount.run(args[1], args[2]);
                 break;
+            case "AllJobs":
+                AllJobs.run(args[1], args[2]);
+                break;
             default:
                 System.out.println(args[0] + " is not a available Job. You can choose between "
                         + "HoursCount "
                         + "ResponseLengthCount"
                         + "HostnameCount"
                         + "StatusCodeCount"
-                        + "and DateCount");
+                        + "DateCount"
+                        + "and AllJobs");
         }
     }
 
