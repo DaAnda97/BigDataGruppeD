@@ -1,11 +1,12 @@
 import java.util._
 
-//remove if not needed
 import scala.jdk.CollectionConverters._
 import util.control.Breaks._
 import scala.language.postfixOps
 
 object Application {
+
+  var possibleValuesForSudoku: List[List[Integer]] = new ArrayList()
 
   def main(args: Array[String]): Unit = {
 
@@ -44,10 +45,11 @@ object Application {
       Array(0, 0, 0, 0, 0, 0, 0, 0, 0),
       Array(2, 0, 0, 9, 7, 0, 0, 0, 6)
     )
+
     var lastRun: Int = 0
     breakable {
       while (true) {
-        val possibleValuesForSudoku: List[List[Integer]] = evaluatePossibleSolutions(sudokuFieldHard)
+        possibleValuesForSudoku = evaluatePossibleSolutions(sudokuFieldHard)
         eliminateBySquare(sudokuFieldHard, possibleValuesForSudoku)
         val openValues: Int = updateSudokuField(sudokuFieldHard, possibleValuesForSudoku)
         if (openValues == lastRun) {
@@ -78,7 +80,6 @@ object Application {
           }
         }
         // we still have some remaining
-        // we still have some remaining
         if (!isEmpty) {
           break()
         }
@@ -89,18 +90,24 @@ object Application {
       return true
     }
     // else for each-row backtrack
-    //var num: Int = 1
-    for (num <- 1 until n inclusive) {
+    val index: Int = calculateIndexForPossibleValueField(row, col)
+    for (i <- 0 until possibleValuesForSudoku.get(index).size) {
+      val num: Int = possibleValuesForSudoku.get(index).get(i)
       if (validateCheckboxValue(board, row, col, num)) {
         board(row)(col) = num
         if (solveSudoku(board, n)) {
-          return true
+          true
         } else {
           board(row)(col) = 0
         }
       }
     }
     false
+  }
+
+  def calculateIndexForPossibleValueField(i: Int, j: Int): Int = {
+    val fieldSize: Int = 9
+    (i * fieldSize) + j
   }
 
   def validateCheckboxValue(board: Array[Array[Int]],
@@ -125,9 +132,6 @@ object Application {
     true
   }
 
-  // corresponding square has
-  // corresponding square has
-
   def outputSudokuField(sudokuField: Array[Array[Int]]): Unit = {
     for (i <- 0 until sudokuField.length) {
       for (j <- 0 until sudokuField.length) {
@@ -135,7 +139,6 @@ object Application {
       }
       println()
     }
-    println("----------")
   }
 
   def evaluatePossibleSolutions(sudokuField: Array[Array[Int]]): List[List[Integer]] = {
@@ -165,8 +168,6 @@ object Application {
           tmp.add(sudokuField(i)(j))
           possibleValues.add(tmp)
         }
-        // possibleValues.add(Collections.singletonList(sudokuField[i][j]));
-        // possibleValues.add(Collections.singletonList(sudokuField[i][j]));
       }
     }
     possibleValues
@@ -275,7 +276,6 @@ object Application {
   private def checkForUniqueValue(possibleValuesForSquare: List[Integer],
                                   counter: Int): List[Integer] = {
     val removedDuplicates: List[Integer] = new ArrayList[Integer]()
-    // var j: Int = 1
     for (j <- 1 to 9) {
       var occurrence: Int = 0
       for (i <- 0 until possibleValuesForSquare.size
