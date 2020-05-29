@@ -9,60 +9,31 @@ object Application {
   var possibleValuesForSudoku: List[List[Integer]] = new ArrayList()
 
   def main(args: Array[String]): Unit = {
+    solve(Sudokus.boardEmpty)
+  }
 
-    val sudokuFieldMid: Array[Array[Int]] = Array(
-      Array(0, 5, 8, 0, 0, 1, 0, 0, 0),
-      Array(0, 0, 0, 6, 0, 2, 0, 9, 0),
-      Array(0, 2, 0, 3, 4, 5, 0, 6, 0),
-      Array(0, 8, 5, 0, 1, 0, 4, 0, 0),
-      Array(2, 0, 0, 0, 7, 4, 0, 0, 3),
-      Array(0, 0, 0, 0, 3, 6, 0, 1, 5),
-      Array(0, 3, 1, 0, 5, 0, 0, 0, 4),
-      Array(0, 0, 0, 0, 0, 0, 1, 0, 0),
-      Array(4, 0, 0, 0, 2, 0, 7, 0, 0)
-    )
 
-    val sudokuFieldMid1: Array[Array[Int]] = Array(
-      Array(0, 3, 0, 0, 0, 0, 5, 0, 0),
-      Array(0, 4, 7, 0, 0, 2, 0, 9, 0),
-      Array(2, 0, 5, 0, 0, 9, 0, 4, 0),
-      Array(0, 5, 0, 2, 6, 0, 0, 0, 0),
-      Array(3, 8, 2, 0, 0, 0, 7, 0, 0),
-      Array(9, 0, 0, 8, 5, 0, 1, 0, 0),
-      Array(0, 0, 0, 0, 2, 0, 0, 0, 1),
-      Array(0, 0, 1, 4, 8, 5, 0, 0, 6),
-      Array(4, 6, 3, 0, 0, 0, 0, 5, 8)
-    )
 
-    val sudokuFieldHard: Array[Array[Int]] = Array(
-      Array(3, 0, 0, 0, 8, 5, 0, 0, 1),
-      Array(0, 0, 0, 0, 0, 0, 0, 0, 0),
-      Array(0, 2, 0, 1, 0, 0, 3, 5, 0),
-      Array(5, 1, 0, 0, 0, 7, 0, 8, 3),
-      Array(7, 0, 4, 0, 0, 0, 6, 0, 2),
-      Array(9, 3, 0, 8, 0, 0, 0, 7, 5),
-      Array(0, 4, 7, 0, 0, 1, 0, 2, 0),
-      Array(0, 0, 0, 0, 0, 0, 0, 0, 0),
-      Array(2, 0, 0, 9, 7, 0, 0, 0, 6)
-    )
-
+  def solve(board: Array[Array[Int]]): Unit = {
     var lastRun: Int = 0
     breakable {
       while (true) {
-        possibleValuesForSudoku = evaluatePossibleSolutions(sudokuFieldHard)
-        eliminateBySquare(sudokuFieldHard, possibleValuesForSudoku)
-        val openValues: Int = updateSudokuField(sudokuFieldHard, possibleValuesForSudoku)
+        possibleValuesForSudoku = evaluatePossibleSolutions(board)
+        eliminateBySquare(board, possibleValuesForSudoku)
+        val openValues: Int = updateSudokuField(board, possibleValuesForSudoku)
         if (openValues == lastRun) {
-          val isSolved = solveSudoku(sudokuFieldHard, sudokuFieldHard.length)
+          val isSolved = solveSudoku(board, board.length)
           if (isSolved) {
-            outputSudokuField(sudokuFieldHard)
+            outputSudokuField(board)
             break()
           }
         }
         lastRun = openValues
       }
     }
+
   }
+
 
   def solveSudoku(board: Array[Array[Int]], n: Int): Boolean = {
     var row: Int = -1
