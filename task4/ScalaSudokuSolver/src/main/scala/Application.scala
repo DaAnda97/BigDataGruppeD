@@ -9,10 +9,8 @@ object Application {
   var possibleValuesForSudoku: List[List[Integer]] = new ArrayList()
 
   def main(args: Array[String]): Unit = {
-    solve(Sudokus.boardEmpty)
+    solve(Sudokus.board3)
   }
-
-
 
   def solve(board: Array[Array[Int]]): Unit = {
     var lastRun: Int = 0
@@ -31,9 +29,7 @@ object Application {
         lastRun = openValues
       }
     }
-
   }
-
 
   def solveSudoku(board: Array[Array[Int]], n: Int): Boolean = {
     var row: Int = -1
