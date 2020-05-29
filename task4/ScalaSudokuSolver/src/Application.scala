@@ -317,15 +317,6 @@ object Application {
     }
   }
 
-  private def checkIfFinished(sudokuField: Array[Array[Int]]): Boolean = {
-    var isFinished: Boolean = true
-    for (i <- 0 until sudokuField.length; j <- 0 until sudokuField.length
-         if sudokuField(i)(j) == 0) {
-      isFinished = false
-    }
-    isFinished
-  }
-
   def updateSudokuField(sudokuField: Array[Array[Int]],
                         possibleValuesForSudoku: List[List[Integer]]): Int = {
     var listCounter: Int = 0
