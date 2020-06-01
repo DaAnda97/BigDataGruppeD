@@ -17,10 +17,9 @@ object Application {
     breakable {
       while (true) {
         possibleValuesForSudoku = evaluatePossibleSolutions(board)
-        eliminateBySquare(board, possibleValuesForSudoku)
         val openValues: Int = updateSudokuField(board, possibleValuesForSudoku)
         if (openValues == lastRun) {
-          val isSolved = solveSudoku(board, board.length)
+          val isSolved = solveSudokuWithBacktracking(board, board.length)
           if (isSolved) {
             outputSudokuField(board)
             break()
@@ -31,7 +30,7 @@ object Application {
     }
   }
 
-  def solveSudoku(board: Array[Array[Int]], n: Int): Boolean = {
+  def solveSudokuWithBacktracking(board: Array[Array[Int]], n: Int): Boolean = {
     var row: Int = -1
     var col: Int = -1
     var isEmpty: Boolean = true
@@ -62,7 +61,7 @@ object Application {
       val num: Int = possibleValuesForSudoku.get(index).get(i)
       if (validateCheckboxValue(board, row, col, num)) {
         board(row)(col) = num
-        if (solveSudoku(board, n)) {
+        if (solveSudokuWithBacktracking(board, n)) {
           true
         } else {
           board(row)(col) = 0
@@ -108,17 +107,17 @@ object Application {
     }
   }
 
-  def evaluatePossibleSolutions(sudokuField: Array[Array[Int]]): List[List[Integer]] = {
+  def evaluatePossibleSolutions(board: Array[Array[Int]]): List[List[Integer]] = {
     val possibleValues: List[List[Integer]] = new ArrayList[List[Integer]]()
-    for (i <- 0 until sudokuField.length) {
-      val notPossibleHorizontalList: List[Integer] = eliminateHorizontalValues(sudokuField, i)
-      for (j <- 0 until sudokuField.length) {
+    for (i <- 0 until board.length) {
+      val notPossibleHorizontalList: List[Integer] = eliminateHorizontalValues(board, i)
+      for (j <- 0 until board.length) {
         val possibleValuesForField: List[Integer] = new ArrayList[Integer]()
         val notPossibleVerticalList: List[Integer] =
-          eliminateVerticalValues(sudokuField, j)
+          eliminateVerticalValues(board, j)
         val mergedList: List[Integer] =
           merge(notPossibleHorizontalList, notPossibleVerticalList)
-        if (sudokuField(i)(j) == 0) {
+        if (board(i)(j) == 0) {
           var k: Int = 1
           while (k <= 9) {
             if (!mergedList.contains(k)) {
@@ -132,11 +131,12 @@ object Application {
           possibleValues.add(possibleValuesForField)
         } else {
           val tmp: List[Integer] = new ArrayList[Integer]()
-          tmp.add(sudokuField(i)(j))
+          tmp.add(board(i)(j))
           possibleValues.add(tmp)
         }
       }
     }
+    eliminateBySquare(board, possibleValues)
     possibleValues
   }
 
