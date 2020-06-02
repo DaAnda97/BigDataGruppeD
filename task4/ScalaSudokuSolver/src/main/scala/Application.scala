@@ -9,10 +9,15 @@ object Application {
   var possibleValuesForSudoku: List[List[Integer]] = new ArrayList()
 
   def main(args: Array[String]): Unit = {
-    solve(Sudokus.board3)
+    val t0 = System.currentTimeMillis()
+    solve(Sudokus.board1)
+    val t1 = System.currentTimeMillis()
+    println("Elapsed time: " + (t1 - t0) + "ms")
   }
 
   def solve(board: Array[Array[Int]]): Unit = {
+    System.out.println("Empty Fileds: " + sumUpEmptyFields(board))
+
     var lastRun: Int = 0
     breakable {
       while (true) {
@@ -319,6 +324,20 @@ object Application {
 
     }
     mergedList
+  }
+
+  def sumUpEmptyFields(board: Array[Array[Int]]): Int ={
+    var emptyFields = 0;
+
+    for (i <- 0 until board.length) {
+      for (j <- 0 until board.length) {
+        if(board(i)(j) == 0){
+          emptyFields = emptyFields + 1;
+        }
+      }
+    }
+
+    emptyFields
   }
 
 }
