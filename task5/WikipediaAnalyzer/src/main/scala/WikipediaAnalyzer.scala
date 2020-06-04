@@ -12,7 +12,11 @@ import collection.JavaConverters._
 import scala.reflect.ClassTag
 
 object WikipediaAnalyzer {
-  val spark = SparkSession.builder.master("local").getOrCreate()
+  val spark = SparkSession.builder
+    .master("local")
+    .config("spark.driver.bindAddress", "127.0.0.1")
+    .getOrCreate()
+
   def main(args: Array[String]): Unit = {
 
     //load xml dataframe
