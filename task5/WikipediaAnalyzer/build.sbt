@@ -11,6 +11,7 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-sql" % sparkVersion,
+  "org.apache.spark" %% "spark-mllib" % sparkVersion,
   "com.databricks" % "spark-xml_2.12" % "0.9.0",
   "edu.stanford.nlp" % "stanford-corenlp" % "4.0.0",
   "edu.stanford.nlp" % "stanford-corenlp" % "4.0.0" classifier "models",

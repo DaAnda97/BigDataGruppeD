@@ -1,3 +1,5 @@
+import java.util
+
 import com.databricks.spark.xml._
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
@@ -5,11 +7,14 @@ import java.util.Properties
 
 import edu.stanford.nlp.pipeline.CoreDocument
 import edu.stanford.nlp.pipeline.StanfordCoreNLP
+import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Matrices, Matrix, SingularValueDecomposition, Vector, Vectors}
+import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.rdd.RDD
 import org.wikiclean.WikiClean
 
 import collection.JavaConverters._
-import scala.reflect.ClassTag
+import scala.collection.mutable
+import scala.collection.mutable
 
 object WikipediaAnalyzer {
   val spark = SparkSession.builder
@@ -17,8 +22,11 @@ object WikipediaAnalyzer {
     .config("spark.driver.bindAddress", "127.0.0.1")
     .getOrCreate()
 
-  def main(args: Array[String]): Unit = {
+  //Number of most frequent words to be analyzed
+  //For n>=100 Spark changes the way the SVD is calculated resulting in much longer runtime
+  val n = 99
 
+  def main(args: Array[String]): Unit = {
     //load xml dataframe
     val dataframe = spark.read
       .option("rowTag", "page")
@@ -31,7 +39,7 @@ object WikipediaAnalyzer {
     //noRedirects is of the type Dataframe. The corresponding RDD is required so it can be turned into a pair RDD using the .map call
     val keyValue = noRedirects.rdd.map(row =>
       (
-        row.getAs("title").toString(), //key
+        row.getAs("title").toString().asInstanceOf[String], //key
         row.getAs("revision") //value
           .asInstanceOf[sql.Row]
           .getAs("text")
@@ -40,9 +48,10 @@ object WikipediaAnalyzer {
           .toString()
       )
     )
+    val noDisambiguations = keyValue.filter(pair => !pair._1.endsWith("(disambiguation)"))
 
     //Convert the Wiki markup text to actual plaintext
-    val plainText = keyValue.mapValues(Functions.toPlaintext)
+    val plainText = noDisambiguations.mapValues(Functions.toPlaintext)
 
     //Remove external links in square brackets
     val noLinks = plainText.mapValues(x => x.replaceAll("\\[.*?\\]", ""))
@@ -59,11 +68,9 @@ object WikipediaAnalyzer {
     //-------------------------------------------------------------
     //4.1 Term frequency of each term with respect to each document
     //-------------------------------------------------------------
-    val docFrequency = noStopwords.mapValues(wordList =>
+    var docFrequency = noStopwords.mapValues(wordList =>
       wordList.groupBy(identity).mapValues(_.size).toSeq.sortBy(_._2)(Ordering[Int].reverse)
     )
-
-    docFrequency.lookup("Anarchism")(0).foreach(println)
 
     //-------------------------------------------------------------
     //4.2 Total frequency of each term
@@ -73,37 +80,104 @@ object WikipediaAnalyzer {
     val totalFrequency = flattened.reduceByKey((a, b) => a+b)
       .sortBy(_._2, false)
 
-    val mostFrequent = totalFrequency.keys.take(1000)
+    val mostFrequent = totalFrequency.keys.take(n)
 
     val tf = totalFrequency.filter(pair => mostFrequent.contains(pair._1))
+    docFrequency = docFrequency.mapValues(array => array.filter(pair => mostFrequent.contains(pair._1)))
 
     //-------------------------------------------------------------
-    //4.3 Inverse term frequency of each term
+    //4.3 Inverse document frequency of each term
     //-------------------------------------------------------------
-    val invTotalFrequency = tf.foreach(pair => 1.0/pair._2)
-
-    //-------------------------------------------------------------
-    //4.4 TF-IDF score of each term with respect to each document
-    //-------------------------------------------------------------
-    val numOfArticles = keyValue.count()
+    val numOfArticles = noStopwords.count()
     val mappedToOne = noStopwords.mapValues(wordList => wordList.filter(mostFrequent.toSet))
-    .mapValues(wordList =>
-      wordList.toSet.map((word: String) => (word, 1))
-    )
+      .mapValues(wordList =>
+        wordList.toSet.map((word: String) => (word, 1))
+      )
 
     //The number of documents in which a term appears
     val docOccurrences = mappedToOne.values.flatMap(identity).reduceByKey((a, b) => a+b)
 
     val idf = docOccurrences.mapValues(occurrences => scala.math.log(numOfArticles.toDouble/occurrences.toDouble))
+
+    //-------------------------------------------------------------
+    //4.4 TF-IDF score of each term with respect to each document
+    //-------------------------------------------------------------
+
     //The rdd needs to be collected to be used inside the subsequent lambda expression
     val idfLocal = idf.collect().toMap
 
     val tfIdf = docFrequency.mapValues(array =>
-      array.filter(pair => mostFrequent.contains(pair._1))
-        .map(pair => (pair._1, idfLocal(pair._1) * pair._2))
+      array.map(pair => (pair._1, idfLocal(pair._1) * pair._2))
     )
 
-    tfIdf.lookup("Anarchism")(0).sortBy(_._2).foreach(println)
+    //-------------------------------------------------------------
+    //5. SVD
+    //-------------------------------------------------------------
+    val wordToIndex = mostFrequent.zipWithIndex.toMap
+
+    val tfIdfMaps = tfIdf.mapValues(array => array.toMap)
+
+    val vectors = tfIdfMaps.mapValues(frequencyMap =>
+        Vectors.dense(
+          Array.range(0, wordToIndex.size)
+          .map(index => frequencyMap.getOrElse(mostFrequent(index), 0.0))
+        )
+    ).cache()
+
+    val docToIndex = vectors.keys.zipWithIndex().collectAsMap()
+
+    val mat = new RowMatrix(vectors.values, numOfArticles, n)
+
+    val svd = mat.computeSVD(20, computeU = true)
+    val docConceptRelevance: RowMatrix = svd.U
+    val conceptStrengths: Vector = svd.s
+    val termConceptRelevance = svd.V
+
+    //-------------------------------------------------------------
+    //6.1 Top concepts
+    //-------------------------------------------------------------
+    val strongestConcepts = conceptStrengths.toArray.zipWithIndex.sortBy(_._1).slice(15, 20)
+    val conceptWords = new Array[Array[(String, Double)]](5)
+    for(i <- 0 to 4){
+      println("Concept " + i)
+      conceptWords(i) = new Array[(String, Double)](n)
+      val ind = strongestConcepts(i)._2
+      for(j <- 0 to (n - 1)) {
+        conceptWords(i)(j) = (mostFrequent(j), termConceptRelevance(j, ind))
+      }
+      conceptWords(i) = conceptWords(i).sortBy(pair => pair._2)(Ordering[Double].reverse)
+      for(j <- 0 to 10) {
+        println(conceptWords(i)(j))
+      }
+    }
+    println("--------")
+
+    val relations = new Relations(svd, wordToIndex, mostFrequent, docToIndex)
+
+    //Examples
+    //6.2
+    println("Terms related to Book:")
+    relations.termTerms("book", 8).foreach(println)
+    println("Terms related to War:")
+    relations.termTerms("war", 8).foreach(println)
+    println("Terms related to State:")
+    relations.termTerms("state", 8).foreach(println)
+
+    //6.3
+    println("Docs related to Anarchism:")
+    relations.docDocs("Anarchism", 8).foreach(println)
+    println("Docs related to Bible:")
+    relations.docDocs("Bible", 8).foreach(println)
+    println("Docs related to Buckingham Palace:")
+    relations.docDocs("Buckingham Palace", 8).foreach(println)
+
+    //6.4
+    println("Docs related to Book:")
+    relations.termDocs("book", 8).foreach(println)
+    println("Docs related to War:")
+    relations.termDocs("war", 8).foreach(println)
+    println("Docs related to State:")
+    relations.termDocs("state", 8).foreach(println)
 
     try {
       spark.stop()
@@ -141,5 +215,4 @@ object Functions {
 */
     return doc.tokens().asScala.toList.map(x => x.toString())
   }
-
 }

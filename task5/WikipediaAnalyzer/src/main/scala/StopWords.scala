@@ -237,6 +237,27 @@ object StopWords {
     "ix",
     "x",
     "xi",
-    "xii"
+    "xii",
+    "first",
+    "will",
+    "known",
+    "later",
+    "however",
+    "early",
+    "since",
+    "de",
+    "us",
+    "often",
+    "pp",
+    "use",
+    "used",
+    "now",
+    "much",
+    "among",
+    "within",
+    "even",
+    "using",
+    "another"
+
   )
 }
