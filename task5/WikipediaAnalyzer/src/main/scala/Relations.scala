@@ -13,8 +13,8 @@ class Relations( val svd: SingularValueDecomposition[RowMatrix, Matrix],
   val totalDocs = docToIndex.size
   val indexToDoc = docToIndex.map(pair => (pair._2, pair._1))
 
-  val vs = svd.V.multiply(DenseMatrix.diag(svd.s)).transpose
-  val vsRowMatrix = new RowMatrix(matrixToRDD(vs))
+  val vs = svd.V.multiply(DenseMatrix.diag(svd.s))
+  val vsRowMatrix = new RowMatrix(matrixToRDD(vs.transpose))
   val termTermRelation = vsRowMatrix.columnSimilarities().toBlockMatrix().toLocalMatrix()
 
   val us = svd.U.multiply(DenseMatrix.diag(svd.s))
