@@ -23,6 +23,9 @@ docker-compose up -d
 ```
 elasticsearch is running at localhost:9200. Log in with usr: elastic, pwd: changeme.
 
+The data is available under: http://localhost:9200/[document|term]/[_source|_doc]/<ID> </br>
+f.e. http://localhost:9200/document/_doc/Austria-Hungary, http://localhost:9200/term/_source/power
+
 ## data
 enwiki_small.xml is a small version of the full Wikipedia dump used for development. The full dump is available here: https://dumps.wikimedia.org/enwiki/20200501/
 

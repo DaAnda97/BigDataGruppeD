@@ -51,11 +51,10 @@ object WikipediaAnalyzer {
       )
     )
     val noDisambiguations = articleWithTitle.filter(pair => !pair._1.endsWith("(disambiguation)"))
-    //val data = noDisambiguations.take(20)
-    //data
 
     //Convert the Wiki markup text to actual plaintext
     val plainText = noDisambiguations.mapValues(Functions.toPlaintext)
+
 
     //Remove external links in square brackets
     val noLinks = plainText.mapValues(x => x.replaceAll("\\[.*?\\]", ""))
@@ -190,8 +189,7 @@ object WikipediaAnalyzer {
     //-------------------------------------------------------------
     //7 Elasticsearch - Start docker-elasticsearch-stack first!
     //-------------------------------------------------------------
-    instertToElasticsearch(relations, articleWithTitle.keys.collect())
-
+    instertToElasticsearch(relations, docToIndex.keySet)
 
     try {
       spark.stop()
@@ -201,7 +199,7 @@ object WikipediaAnalyzer {
   }
 
 
-  def instertToElasticsearch(relations: Relations, articles: Array[String]) = {
+  def instertToElasticsearch(relations: Relations, articles: scala.collection.Set[String]) = {
 
     val props = ElasticProperties("http://localhost:9200")
     val callback = new HttpClientConfigCallback {
@@ -225,10 +223,10 @@ object WikipediaAnalyzer {
 
     relations.getAllWords().foreach { relation: String =>
       client.execute {
-        indexInto("term").fields("mostRelevantTerms" -> relations.termTerms(relation, 20)).refresh(RefreshPolicy.Immediate)
-      }.await
-      client.execute {
-        indexInto("term").fields("mostRelatedTerms" -> relations.termDocs(relation, 100)).refresh(RefreshPolicy.Immediate)
+        indexInto("term").id(relation).fields(
+          "mostRelevantTerms" -> relations.termTerms(relation, 20),
+          "mostRelatedDocs" -> relations.termDocs(relation, 100)
+        ).refresh(RefreshPolicy.Immediate)
       }.await
     }
 
@@ -237,18 +235,18 @@ object WikipediaAnalyzer {
     client.execute {
       createIndex("document").mapping(
         properties(
-          TextField("mostRelevantTerms"),
-          TextField("mostRelatedDocs")
+          TextField("mostRelevantDocs"),
+          TextField("mostRelatedTerms")
         )
       )
     }.await
 
     articles.foreach { title =>
       client.execute {
-        indexInto("document").fields("mostRelevantTerms" -> relations.docDocs(title, 20)).refresh(RefreshPolicy.Immediate)
-      }.await
-      client.execute {
-        indexInto("document").fields("mostRelatedTerms" -> relations.docTerms(title, 100)).refresh(RefreshPolicy.Immediate)
+        indexInto("document").id(title).fields(
+          "mostRelevantDocs" -> relations.docDocs(title, 20),
+          "mostRelatedTerms" -> relations.docTerms(title, 100)
+        ).refresh(RefreshPolicy.Immediate)
       }.await
     }
 
