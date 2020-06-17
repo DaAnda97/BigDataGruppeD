@@ -1,4 +1,4 @@
-import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Matrices, Matrix, SingularValueDecomposition, Vector}
+import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Matrices, Matrix, SingularValueDecomposition, Vector, Vectors}
 import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
 import org.apache.spark.rdd.RDD
 
@@ -6,7 +6,8 @@ class Relations( val svd: SingularValueDecomposition[RowMatrix, Matrix],
                  val wordToIndex: Map[String, Int],
                  val indexToWord: Array[String],
                  val docToIndex: scala.collection.Map[String, Long]
-               ) {
+               )
+{
 
   val totalWords = wordToIndex.size
   val totalDocs = docToIndex.size
@@ -31,17 +32,6 @@ class Relations( val svd: SingularValueDecomposition[RowMatrix, Matrix],
     return mostRelatedTerms
   }
 
-  //Returns the n docs that are most related to the given doc
-  def docDocs(doc: String, n: Int): Array[String] = {
-    val ind = docToIndex(doc).toInt
-    val relatedDocs = new Array[Double](totalDocs)
-    for(i <- 0 to (totalDocs - 1))
-      relatedDocs(i) = docDocRelation(ind, i)
-    val sorted = relatedDocs.zipWithIndex.sortBy(_._1)(Ordering[Double].reverse)
-    val mostRelatedDocs = sorted.slice(0, n - 1).map(pair => indexToDoc(pair._2))
-    return mostRelatedDocs
-  }
-
   //Returns the n docs that are most related to the given term
   def termDocs(term: String, n: Int): Array[String] = {
     val ind = wordToIndex(term)
@@ -53,6 +43,34 @@ class Relations( val svd: SingularValueDecomposition[RowMatrix, Matrix],
     val sorted = termDocRelation.zipWithIndex.sortBy(_._1)(Ordering[Double].reverse)
     val mostRelatedDocs = sorted.slice(0, n - 1).map(pair => indexToDoc(pair._2))
     return mostRelatedDocs
+  }
+
+  //Returns the n docs that are most related to the given doc
+  def docDocs(doc: String, n: Int): Array[String] = {
+    val ind = docToIndex(doc).toInt
+    val relatedDocs = new Array[Double](totalDocs)
+    for(i <- 0 to (totalDocs - 1))
+      relatedDocs(i) = docDocRelation(ind, i)
+    val sorted = relatedDocs.zipWithIndex.sortBy(_._1)(Ordering[Double].reverse)
+    val mostRelatedDocs = sorted.slice(0, n - 1).map(pair => indexToDoc(pair._2))
+    return mostRelatedDocs
+  }
+
+
+  //Returns the n terms that are most related to the given doc
+  def docTerms(doc: String, n: Int): Array[String] = {
+    val ind = docToIndex(doc).toInt
+    val row = svd.U.rows.collect().apply(ind).toArray
+    val transposedRow = Vectors.dense(row)
+    val docTermRelation = vs.multiply(transposedRow).toArray
+    val sorted = docTermRelation.zipWithIndex.sortBy(_._1)(Ordering[Double].reverse)
+    val mostRelatedTerms = sorted.slice(0, n - 1).map(pair => indexToWord(pair._2))
+    return mostRelatedTerms
+  }
+
+
+  def getAllWords(): Array[String] = {
+    return indexToWord
   }
 
   //Source: https://stackoverflow.com/questions/30169841/convert-matrix-to-rowmatrix-in-apache-spark-using-scala
@@ -72,4 +90,6 @@ class Relations( val svd: SingularValueDecomposition[RowMatrix, Matrix],
       .map(idxRow => (idxRow.index, idxRow.vector))
       .sortByKey().map(_._2))
   }
+
+
 }

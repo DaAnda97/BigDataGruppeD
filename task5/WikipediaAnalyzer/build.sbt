@@ -15,5 +15,6 @@ libraryDependencies ++= Seq(
   "com.databricks" % "spark-xml_2.12" % "0.9.0",
   "edu.stanford.nlp" % "stanford-corenlp" % "4.0.0",
   "edu.stanford.nlp" % "stanford-corenlp" % "4.0.0" classifier "models",
-  "org.wikiclean" % "wikiclean" % "1.2"
+  "org.wikiclean" % "wikiclean" % "1.2",
+  "com.sksamuel.elastic4s" % "elastic4s-client-esjava_2.12" % "7.7.0"
 )

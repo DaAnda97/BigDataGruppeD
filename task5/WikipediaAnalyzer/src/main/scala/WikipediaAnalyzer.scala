@@ -1,26 +1,28 @@
-import java.util
-
-import com.databricks.spark.xml._
-import org.apache.spark.sql
-import org.apache.spark.sql.SparkSession
 import java.util.Properties
 
-import edu.stanford.nlp.pipeline.CoreDocument
-import edu.stanford.nlp.pipeline.StanfordCoreNLP
-import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector, Matrices, Matrix, SingularValueDecomposition, Vector, Vectors}
-import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix, RowMatrix}
-import org.apache.spark.rdd.RDD
+import com.databricks.spark.xml._
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.fields.TextField
+import com.sksamuel.elastic4s.http._
+import com.sksamuel.elastic4s.requests.common.RefreshPolicy
+import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, RequestFailure, RequestSuccess}
+import edu.stanford.nlp.pipeline.{CoreDocument, StanfordCoreNLP}
+import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
+import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.sql
+import org.apache.spark.sql.SparkSession
+import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback
 import org.wikiclean.WikiClean
 
-import collection.JavaConverters._
-import scala.collection.mutable
-import scala.collection.mutable
+import scala.collection.JavaConverters._
+
 
 object WikipediaAnalyzer {
-  val spark = SparkSession.builder
-    .master("local")
-    .config("spark.driver.bindAddress", "127.0.0.1")
-    .getOrCreate()
+  val spark = SparkSession.builder.master("local").getOrCreate()
 
   //Number of most frequent words to be analyzed
   //For n>=100 Spark changes the way the SVD is calculated resulting in much longer runtime
@@ -37,7 +39,7 @@ object WikipediaAnalyzer {
 
     //Create a pair RDD of article titles to article text
     //noRedirects is of the type Dataframe. The corresponding RDD is required so it can be turned into a pair RDD using the .map call
-    val keyValue = noRedirects.rdd.map(row =>
+    val articleWithTitle = noRedirects.rdd.map(row =>
       (
         row.getAs("title").toString().asInstanceOf[String], //key
         row.getAs("revision") //value
@@ -48,7 +50,9 @@ object WikipediaAnalyzer {
           .toString()
       )
     )
-    val noDisambiguations = keyValue.filter(pair => !pair._1.endsWith("(disambiguation)"))
+    val noDisambiguations = articleWithTitle.filter(pair => !pair._1.endsWith("(disambiguation)"))
+    //val data = noDisambiguations.take(20)
+    //data
 
     //Convert the Wiki markup text to actual plaintext
     val plainText = noDisambiguations.mapValues(Functions.toPlaintext)
@@ -179,12 +183,98 @@ object WikipediaAnalyzer {
     println("Docs related to State:")
     relations.termDocs("state", 8).foreach(println)
 
+    //docTerms
+    println("Docs related to Anarchism:")
+    relations.docTerms("Anarchism", 8).foreach(println)
+
+    //-------------------------------------------------------------
+    //7 Elasticsearch - Start docker-elasticsearch-stack first!
+    //-------------------------------------------------------------
+    instertToElasticsearch(relations, articleWithTitle.keys.collect())
+
+
     try {
       spark.stop()
     } catch {
       case _: Throwable => () //Exceptions are expected here
     }
   }
+
+
+  def instertToElasticsearch(relations: Relations, articles: Array[String]) = {
+
+    val props = ElasticProperties("http://localhost:9200")
+    val callback = new HttpClientConfigCallback {
+      override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
+        val creds = new BasicCredentialsProvider()
+        creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("elastic", "changeme"))
+        httpClientBuilder.setDefaultCredentialsProvider(creds)
+      }
+    }
+    val client = ElasticClient(JavaClient(props, requestConfigCallback = NoOpRequestConfigCallback, httpClientConfigCallback = callback))
+
+    //7.1 term index where to store for each term, the 20 most related terms and 100 most related documents
+    client.execute {
+      createIndex("term").mapping(
+        properties(
+          TextField("mostRelevantTerms"),
+          TextField("mostRelatedDocs")
+        )
+      )
+    }.await
+
+    relations.getAllWords().foreach { relation: String =>
+      client.execute {
+        indexInto("term").fields("mostRelevantTerms" -> relations.termTerms(relation, 20)).refresh(RefreshPolicy.Immediate)
+      }.await
+      client.execute {
+        indexInto("term").fields("mostRelatedTerms" -> relations.termDocs(relation, 100)).refresh(RefreshPolicy.Immediate)
+      }.await
+    }
+
+
+    //7.2 document index, where to store for each document the 20 most related documents and 100 most related terms
+    client.execute {
+      createIndex("document").mapping(
+        properties(
+          TextField("mostRelevantTerms"),
+          TextField("mostRelatedDocs")
+        )
+      )
+    }.await
+
+    articles.foreach { title =>
+      client.execute {
+        indexInto("document").fields("mostRelevantTerms" -> relations.docDocs(title, 20)).refresh(RefreshPolicy.Immediate)
+      }.await
+      client.execute {
+        indexInto("document").fields("mostRelatedTerms" -> relations.docTerms(title, 100)).refresh(RefreshPolicy.Immediate)
+      }.await
+    }
+
+    // Test successful insertion
+    val resp = client.execute {
+      search("term").query(relations.getAllWords().apply(0))
+    }.await
+
+    // resp is a Response[+U] ADT consisting of either a RequestFailure containing the
+    // Elasticsearch error details, or a RequestSuccess[U] that depends on the type of request.
+    // In this case it is a RequestSuccess[SearchResponse]
+
+    println("---- Search Results ----")
+    resp match {
+      case failure: RequestFailure => println("We failed " + failure.error)
+      case results: RequestSuccess[SearchResponse] => println(results.result.hits.hits.toList)
+      case results: RequestSuccess[_] => println(results.result)
+    }
+
+    // Response also supports familiar combinators like map / flatMap / foreach:
+    resp foreach (search => println(s"There were ${search.totalHits} total hits"))
+
+    client.close()
+
+  }
+
 }
 
 object Functions {
