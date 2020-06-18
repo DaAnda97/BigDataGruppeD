@@ -11,8 +11,10 @@ import edu.stanford.nlp.pipeline.{CoreDocument, StanfordCoreNLP}
 import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
+import org.apache.spark.api.java.function.VoidFunction
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql
 import org.apache.spark.sql.SparkSession
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback
@@ -28,10 +30,12 @@ object WikipediaAnalyzer {
   //For n>=100 Spark changes the way the SVD is calculated resulting in much longer runtime
   val n = 99
 
+
   def main(args: Array[String]): Unit = {
     //load xml dataframe
     val dataframe = spark.read
       .option("rowTag", "page")
+      .option("nullValue", "")
       .xml("enwiki_small.xml")
 
     //Remove entries that only redirect to actual articles
@@ -39,22 +43,21 @@ object WikipediaAnalyzer {
 
     //Create a pair RDD of article titles to article text
     //noRedirects is of the type Dataframe. The corresponding RDD is required so it can be turned into a pair RDD using the .map call
-    val articleWithTitle = noRedirects.rdd.map(row =>
+    val articles = noRedirects.rdd.map(row =>
       (
-        row.getAs("title").toString().asInstanceOf[String], //key
-        row.getAs("revision") //value
-          .asInstanceOf[sql.Row]
-          .getAs("text")
-          .asInstanceOf[sql.Row]
-          .getAs("_VALUE")
-          .toString()
+        row.getAs("title").toString, //key
+        Article(
+          row.getAs("title").toString,
+          row.getAs("revision").asInstanceOf[sql.Row].getAs("text").asInstanceOf[sql.Row].getAs("_VALUE").toString,
+          row.getAs("revision").asInstanceOf[sql.Row].getAs("text").asInstanceOf[sql.Row].getAs("_bytes").toString,
+          row.getAs("revision").asInstanceOf[sql.Row].getAs("contributor").asInstanceOf[sql.Row].getAs("username"),
+          row.getAs("revision").asInstanceOf[sql.Row].getAs("timestamp")
+        ) //value
       )
-    )
-    val noDisambiguations = articleWithTitle.filter(pair => !pair._1.endsWith("(disambiguation)"))
+    ).filter(title => !title._1.endsWith("(disambiguation)"))
 
     //Convert the Wiki markup text to actual plaintext
-    val plainText = noDisambiguations.mapValues(Functions.toPlaintext)
-
+    val plainText = articles.mapValues(article => Functions.toPlaintext(article.title))
 
     //Remove external links in square brackets
     val noLinks = plainText.mapValues(x => x.replaceAll("\\[.*?\\]", ""))
@@ -80,7 +83,7 @@ object WikipediaAnalyzer {
     //-------------------------------------------------------------
     val flattened = docFrequency.values.flatMap(identity)
 
-    val totalFrequency = flattened.reduceByKey((a, b) => a+b)
+    val totalFrequency = flattened.reduceByKey((a, b) => a + b)
       .sortBy(_._2, false)
 
     val mostFrequent = totalFrequency.keys.take(n)
@@ -98,9 +101,9 @@ object WikipediaAnalyzer {
       )
 
     //The number of documents in which a term appears
-    val docOccurrences = mappedToOne.values.flatMap(identity).reduceByKey((a, b) => a+b)
+    val docOccurrences = mappedToOne.values.flatMap(identity).reduceByKey((a, b) => a + b)
 
-    val idf = docOccurrences.mapValues(occurrences => scala.math.log(numOfArticles.toDouble/occurrences.toDouble))
+    val idf = docOccurrences.mapValues(occurrences => scala.math.log(numOfArticles.toDouble / occurrences.toDouble))
 
     //-------------------------------------------------------------
     //4.4 TF-IDF score of each term with respect to each document
@@ -121,10 +124,10 @@ object WikipediaAnalyzer {
     val tfIdfMaps = tfIdf.mapValues(array => array.toMap)
 
     val vectors = tfIdfMaps.mapValues(frequencyMap =>
-        Vectors.dense(
-          Array.range(0, wordToIndex.size)
+      Vectors.dense(
+        Array.range(0, wordToIndex.size)
           .map(index => frequencyMap.getOrElse(mostFrequent(index), 0.0))
-        )
+      )
     ).cache()
 
     val docToIndex = vectors.keys.zipWithIndex().collectAsMap()
@@ -141,15 +144,15 @@ object WikipediaAnalyzer {
     //-------------------------------------------------------------
     val strongestConcepts = conceptStrengths.toArray.zipWithIndex.sortBy(_._1).slice(15, 20)
     val conceptWords = new Array[Array[(String, Double)]](5)
-    for(i <- 0 to 4){
+    for (i <- 0 to 4) {
       println("Concept " + i)
       conceptWords(i) = new Array[(String, Double)](n)
       val ind = strongestConcepts(i)._2
-      for(j <- 0 to (n - 1)) {
+      for (j <- 0 to (n - 1)) {
         conceptWords(i)(j) = (mostFrequent(j), termConceptRelevance(j, ind))
       }
       conceptWords(i) = conceptWords(i).sortBy(pair => pair._2)(Ordering[Double].reverse)
-      for(j <- 0 to 10) {
+      for (j <- 0 to 10) {
         println(conceptWords(i)(j))
       }
     }
@@ -161,10 +164,10 @@ object WikipediaAnalyzer {
     //6.2
     println("Terms related to Book:")
     relations.termTerms("book", 8).foreach(println)
-    println("Terms related to War:")
-    relations.termTerms("war", 8).foreach(println)
-    println("Terms related to State:")
-    relations.termTerms("state", 8).foreach(println)
+    println("Terms related to Economy:")
+    relations.termTerms("economy", 8).foreach(println)
+    println("Terms related to System:")
+    relations.termTerms("system", 8).foreach(println)
 
     //6.3
     println("Docs related to Anarchism:")
@@ -177,19 +180,32 @@ object WikipediaAnalyzer {
     //6.4
     println("Docs related to Book:")
     relations.termDocs("book", 8).foreach(println)
-    println("Docs related to War:")
-    relations.termDocs("war", 8).foreach(println)
-    println("Docs related to State:")
-    relations.termDocs("state", 8).foreach(println)
+    println("Docs related to Economy:")
+    relations.termDocs("economy", 8).foreach(println)
+    println("Docs related to System:")
+    relations.termDocs("system", 8).foreach(println)
 
     //docTerms
-    println("Docs related to Anarchism:")
+    println("Terms related to Anarchism:")
     relations.docTerms("Anarchism", 8).foreach(println)
 
     //-------------------------------------------------------------
     //7 Elasticsearch - Start docker-elasticsearch-stack first!
     //-------------------------------------------------------------
-    instertToElasticsearch(relations, docToIndex.keySet)
+    val client = initClient()
+
+    //7.1 term index where to store for each term, the 20 most related terms and 100 most related documents
+    insertToElasticsearch(client, relations)
+
+    //7.2 document index, where to store for each document the 20 most related documents and 100 most related terms .map(identity)
+    //7.3 metadata
+    articles.collect().foreach( a => {
+        insertToElasticsearch(client, relations, a._2)
+    })
+
+    testInsertion(client, relations);
+
+    client.close()
 
     try {
       spark.stop()
@@ -198,9 +214,7 @@ object WikipediaAnalyzer {
     }
   }
 
-
-  def instertToElasticsearch(relations: Relations, articles: scala.collection.Set[String]) = {
-
+  def initClient(): ElasticClient = {
     val props = ElasticProperties("http://localhost:9200")
     val callback = new HttpClientConfigCallback {
       override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
@@ -209,9 +223,14 @@ object WikipediaAnalyzer {
         httpClientBuilder.setDefaultCredentialsProvider(creds)
       }
     }
-    val client = ElasticClient(JavaClient(props, requestConfigCallback = NoOpRequestConfigCallback, httpClientConfigCallback = callback))
 
-    //7.1 term index where to store for each term, the 20 most related terms and 100 most related documents
+    ElasticClient(JavaClient(props, requestConfigCallback = NoOpRequestConfigCallback, httpClientConfigCallback = callback))
+  }
+
+  def insertToElasticsearch(client: ElasticClient, relations: Relations): Unit = {
+
+    println("---- Inserting Terms ----")
+
     client.execute {
       createIndex("term").mapping(
         properties(
@@ -230,26 +249,38 @@ object WikipediaAnalyzer {
       }.await
     }
 
+  }
 
-    //7.2 document index, where to store for each document the 20 most related documents and 100 most related terms
+  def insertToElasticsearch(client: ElasticClient, relations: Relations, article: Article) = {
+
+    println("---- Inserting documents ----")
+
     client.execute {
       createIndex("document").mapping(
         properties(
           TextField("mostRelevantDocs"),
-          TextField("mostRelatedTerms")
+          TextField("mostRelatedTerms"),
+          TextField("size"),
+          TextField("lastContributor"),
+          TextField("lastModified")
         )
       )
     }.await
 
-    articles.foreach { title =>
-      client.execute {
-        indexInto("document").id(title).fields(
-          "mostRelevantDocs" -> relations.docDocs(title, 20),
-          "mostRelatedTerms" -> relations.docTerms(title, 100)
-        ).refresh(RefreshPolicy.Immediate)
-      }.await
-    }
+    client.execute {
+      indexInto("document").id(article.title).fields(
+        "mostRelevantDocs" -> relations.docDocs(article.title, 20),
+        "mostRelatedTerms" -> relations.docTerms(article.title, 100),
+        "size" -> article.size,
+        "lastContributor" -> article.contributor,
+        "lastModified" -> article.lastModified
+      ).refresh(RefreshPolicy.Immediate)
+    }.await
 
+
+  }
+
+  def testInsertion(client: ElasticClient, relations: Relations) = {
     // Test successful insertion
     val resp = client.execute {
       search("term").query(relations.getAllWords().apply(0))
@@ -268,10 +299,8 @@ object WikipediaAnalyzer {
 
     // Response also supports familiar combinators like map / flatMap / foreach:
     resp foreach (search => println(s"There were ${search.totalHits} total hits"))
-
-    client.close()
-
   }
+
 
 }
 
@@ -296,11 +325,11 @@ object Functions {
 
     val doc = new CoreDocument(text)
     nlp.annotate(doc)
-/*
-    val tokens = doc.tokens().asScala
-    val lemmas = tokens.map(x => x.lemma()).toList
-    return lemmas
-*/
+    /*
+        val tokens = doc.tokens().asScala
+        val lemmas = tokens.map(x => x.lemma()).toList
+        return lemmas
+    */
     return doc.tokens().asScala.toList.map(x => x.toString())
   }
 }
