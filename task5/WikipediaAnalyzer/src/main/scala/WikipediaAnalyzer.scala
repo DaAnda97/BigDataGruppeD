@@ -26,11 +26,6 @@ import scala.collection.JavaConverters._
 object WikipediaAnalyzer {
   val spark = SparkSession.builder.master("local").getOrCreate()
 
-  //Number of most frequent words to be analyzed
-  //For n>=100 Spark changes the way the SVD is calculated resulting in much longer runtime
-  val n = 99
-
-
   def main(args: Array[String]): Unit = {
     //load xml dataframe
     val dataframe = spark.read
@@ -46,7 +41,7 @@ object WikipediaAnalyzer {
     val articles = noRedirects.rdd.map(row =>
       (
         row.getAs("title").toString, //key
-        Article(
+        new Article(
           row.getAs("title").toString,
           row.getAs("revision").asInstanceOf[sql.Row].getAs("text").asInstanceOf[sql.Row].getAs("_VALUE").toString,
           row.getAs("revision").asInstanceOf[sql.Row].getAs("text").asInstanceOf[sql.Row].getAs("_bytes").toString,
@@ -86,6 +81,9 @@ object WikipediaAnalyzer {
     val totalFrequency = flattened.reduceByKey((a, b) => a + b)
       .sortBy(_._2, false)
 
+    //Number of most frequent words to be analyzed
+    //For n>=100 Spark changes the way the SVD is calculated resulting in much longer runtime
+    val n = totalFrequency.collect.size
     val mostFrequent = totalFrequency.keys.take(n)
 
     val tf = totalFrequency.filter(pair => mostFrequent.contains(pair._1))
@@ -199,9 +197,7 @@ object WikipediaAnalyzer {
 
     //7.2 document index, where to store for each document the 20 most related documents and 100 most related terms .map(identity)
     //7.3 metadata
-    articles.collect().foreach( a => {
-        insertToElasticsearch(client, relations, a._2)
-    })
+    insertToElasticsearch(client, relations, articles.collect())
 
     testInsertion(client, relations);
 
@@ -251,7 +247,7 @@ object WikipediaAnalyzer {
 
   }
 
-  def insertToElasticsearch(client: ElasticClient, relations: Relations, article: Article) = {
+  def insertToElasticsearch(client: ElasticClient, relations: Relations, articles: Array[(String, Article)]) = {
 
     println("---- Inserting documents ----")
 
@@ -267,15 +263,18 @@ object WikipediaAnalyzer {
       )
     }.await
 
-    client.execute {
-      indexInto("document").id(article.title).fields(
-        "mostRelevantDocs" -> relations.docDocs(article.title, 20),
-        "mostRelatedTerms" -> relations.docTerms(article.title, 100),
-        "size" -> article.size,
-        "lastContributor" -> article.contributor,
-        "lastModified" -> article.lastModified
-      ).refresh(RefreshPolicy.Immediate)
-    }.await
+    articles.foreach{ case (title: String, article: Article) =>
+      client.execute {
+        indexInto("document").id(article.title).fields(
+          "mostRelevantDocs" -> relations.docDocs(article.title, 20),
+          "mostRelatedTerms" -> relations.docTerms(article.title, 100),
+          "size" -> article.size,
+          "lastContributor" -> article.contributor,
+          "lastModified" -> article.lastModified
+        ).refresh(RefreshPolicy.Immediate)
+      }.await
+    }
+
 
 
   }
